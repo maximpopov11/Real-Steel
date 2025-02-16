@@ -9,6 +9,7 @@ import cv2.legacy
 import time
 from sys import exit
 from secret import DIR_PATH
+import numpy as np
 
 mp_pose = mp.solutions.pose
 # from google.colab.patches import cv2_imshow
@@ -23,19 +24,29 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 
 def print_result(
-    result: PoseLandmarkerResult, output_image: mp.Image, timestamp_ms: int
+    result: PoseLandmarkerResult, output_image: mp.Image, timestamp_ms: int, show_background: bool = False
 ):
-    annotated = draw_landmarks_on_image(output_image.numpy_view(), result)
+    # Convert the image to a numpy array
+    output_image_np = output_image.numpy_view()
 
+    if not show_background:
+        # Create a blank (black) image with the same size as the original image
+        height, width, _ = output_image_np.shape
+        output_image_np = np.zeros((height, width, 3), dtype=np.uint8)
+
+    # Draw landmarks on the image (either on the original or blank background)
+    annotated = draw_landmarks_on_image(output_image_np, result)
+
+    # Save the annotated image
     img = Image.fromarray(annotated.astype("uint8"))
     img.save(f"./test/test2_{timestamp_ms}.jpeg")
 
-    print("hello")
-    # Image.fromarray(annotated.astype('uint8')).save("annotated.jpeg")
-    # cv2.imshow("test", cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR))
+    # Optionally display the image
+    # cv2.imshow("Annotated Image", cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR))
     # cv2.waitKey(1)
 
     print("pose landmarker result: {}".format(result))
+
 
 
 options = PoseLandmarkerOptions(
