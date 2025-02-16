@@ -10,6 +10,8 @@ import time
 from sys import exit
 from secret import DIR_PATH
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 mp_pose = mp.solutions.pose
 # from google.colab.patches import cv2_imshow
@@ -23,9 +25,16 @@ PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 
+landmarks = None
+
+
 def print_result(
     result: PoseLandmarkerResult, output_image: mp.Image, timestamp_ms: int, show_background: bool = False
 ):
+    # Extract the landmarks from the result
+    global landmarks
+    landmarks = result.pose_landmarks
+
     # Convert the image to a numpy array
     output_image_np = output_image.numpy_view()
 
@@ -38,14 +47,33 @@ def print_result(
     annotated = draw_landmarks_on_image(output_image_np, result)
 
     # Save the annotated image
-    img = Image.fromarray(annotated.astype("uint8"))
-    img.save(f"./test/test2_{timestamp_ms}.jpeg")
+    # img = Image.fromarray(annotated.astype("uint8"))
+    # img.save(f"./test/test2_{timestamp_ms}.jpeg")
 
     # Optionally display the image
     # cv2.imshow("Annotated Image", cv2.cvtColor(annotated, cv2.COLOR_RGB2BGR))
     # cv2.waitKey(1)
 
-    print("pose landmarker result: {}".format(result))
+    # print("pose landmarker result: {}".format(result))
+
+
+def plot_landmarks_in_3d(landmarks):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Extract the 3D coordinates (x, y, z)
+    x_coords = [landmark.x for landmark in landmarks]
+    y_coords = [landmark.y for landmark in landmarks]
+    z_coords = [landmark.z for landmark in landmarks]
+
+    ax.scatter(x_coords, y_coords, z_coords)
+
+    # Label the axes
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    plt.show()
 
 
 
@@ -65,6 +93,7 @@ if not cap.isOpened():
     print("Error opening video stream or file")
     exit()
 
+count = 0
 with PoseLandmarker.create_from_options(options) as landmarker:
     while True:
         ret, frame = cap.read()
@@ -72,11 +101,17 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         if not ret:
             print("Cant receive frame, exiting...")
 
+        count += 1
+        if count == 10:
+            break
+
         # cv2.imshow('frame', frame)
         # landmarker is initialized, can use it here
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
         # mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
-        print("hello 0")
         landmarker.detect_async(mp_image, int(time.time() * 1000))
 
-read_and_detect()
+print("beep")
+print(landmarks[0])
+print("boop")
+plot_landmarks_in_3d(landmarks[0])
