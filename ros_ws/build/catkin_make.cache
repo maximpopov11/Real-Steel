@@ -1,2 +1,0 @@
-custom_msg:display_pose_tracking:robot_side
--DCATKIN_DEVEL_PREFIX=/home/db-triple/Desktop/git/sd15_reel-steel/ros_ws/devel -DCMAKE_INSTALL_PREFIX=/home/db-triple/Desktop/git/sd15_reel-steel/ros_ws/install -G Unix Makefiles

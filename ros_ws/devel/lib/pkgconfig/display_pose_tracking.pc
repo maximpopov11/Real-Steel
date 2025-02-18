@@ -1,8 +1,0 @@
-prefix=/home/db-triple/Desktop/git/sd15_reel-steel/ros_ws/devel
-
-Name: display_pose_tracking
-Description: Description of display_pose_tracking
-Version: 0.0.0
-Cflags: 
-Libs: -L${prefix}/lib 
-Requires: 
