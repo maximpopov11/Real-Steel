@@ -1,6 +1,3 @@
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
@@ -8,8 +5,8 @@ import numpy as np
 import time
 import cv2
 import time
-from sys import exit
-from lib.depth_cam import configure_pipeline
+from ros_ws.src.robot_side.lib.depth_cam import configure_pipeline
+from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 #cap = cv2.VideoCapture(1)
 #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
@@ -24,15 +21,8 @@ from lib.depth_cam import configure_pipeline
 mp_pose = mp.solutions.pose
 #from google.colab.patches import cv2_imshow
 
-dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel"
+model_path = f"{dir_path}/lib/pose_landmarker_full.task"
 
-model_path = f"{dir_path}/pose_landmarker_full.task"
-
-BaseOptions = mp.tasks.BaseOptions
-PoseLandmarker = mp.tasks.vision.PoseLandmarker
-PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
-PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
-VisionRunningMode = mp.tasks.vision.RunningMode
 
 def print_result(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
     annotated = draw_landmarks_on_image(output_image.numpy_view(), result)

@@ -1,21 +1,10 @@
 import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
 from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
+from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
-#from google.colab.patches import cv2_imshow
-
-# set this to be an absolute path; i believe it has to be absolute
-dir_path = ""
-
-model_path = f"{dir_path}/pose_landmarker_heavy.task"
-
-BaseOptions = mp.tasks.BaseOptions
-PoseLandmarker = mp.tasks.vision.PoseLandmarker
-PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
-VisionRunningMode = mp.tasks.vision.RunningMode
+model_path = f"{dir_path}/lib/pose_landmarker_heavy.task"
 
 options = PoseLandmarkerOptions(
     base_options=BaseOptions(model_asset_path=model_path),
@@ -24,7 +13,7 @@ options = PoseLandmarkerOptions(
 
 with PoseLandmarker.create_from_options(options) as landmarker:
     # landmarker is initialized, can use it here
-    mp_image = mp.Image.create_from_file(f"{dir_path}/tkd.jpeg")
+    mp_image = mp.Image.create_from_file(f"{dir_path}/images/tkd.jpeg")
     #mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
     result = landmarker.detect(mp_image)
     annotated = draw_landmarks_on_image(mp_image.numpy_view(), result)

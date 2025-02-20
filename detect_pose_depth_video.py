@@ -1,21 +1,7 @@
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-from lib.draw import draw_landmarks_on_image
-import cv2
-from PIL import Image
 import numpy as np
-import cv2
 from time import time
-from lib.depth_cam import configure_pipeline
-from lib.landmark_util import get_left_arm_landmarks
-
-mp_pose = mp.solutions.pose
-PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
-BaseOptions = mp.tasks.BaseOptions
-PoseLandmarker = mp.tasks.vision.PoseLandmarker
-PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
-VisionRunningMode = mp.tasks.vision.RunningMode
+from ros_ws.src.robot_side.lib.depth_cam import configure_pipeline
+from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 def make_callback(depth_frame):
     def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
@@ -43,10 +29,7 @@ def make_callback(depth_frame):
 
 def read_video():
 
-    dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel/lib"
-    model_path = f"{dir_path}/pose_landmarker_full.task"
-
-
+    model_path = f"{dir_path}/lib/pose_landmarker_full.task"
 
     # Depth Camera Pipelin
     pipeline = configure_pipeline()

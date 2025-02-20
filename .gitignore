@@ -6,4 +6,5 @@ build/
 
 .catkin_workspace
 
-*/__pycache__/*
+__pycache__/*
+test/*

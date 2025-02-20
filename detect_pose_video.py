@@ -1,26 +1,17 @@
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
-from lib.draw import draw_landmarks_on_image
+from ros_ws.src.robot_side.lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
 import cv2.legacy
 import time
 from sys import exit
+from ros_ws.src.robot_side.lib.mp_util import PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 mp_pose = mp.solutions.pose
-#from google.colab.patches import cv2_imshow
 
-dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel"
 
-model_path = f"{dir_path}/pose_landmarker_lite.task"
+model_path = f"{dir_path}/lib/pose_landmarker_lite.task"
 
-BaseOptions = mp.tasks.BaseOptions
-PoseLandmarker = mp.tasks.vision.PoseLandmarker
-PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
-PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
-VisionRunningMode = mp.tasks.vision.RunningMode
 
 def print_result(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
     annotated = draw_landmarks_on_image(output_image.numpy_view(), result)
