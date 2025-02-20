@@ -1,1 +1,9 @@
+.vscode
+
+devel/
+
+build/
+
+.catkin_workspace
+
 */__pycache__/*
