@@ -28,7 +28,7 @@ def make_callback(depth_frame):
         #    Zs.append(mark[2])
         leftShoulderX = round(leftArm[0].x * 640)
         leftShoulderY = round(leftArm[0].y * 480)
-        leftShoulderZ = 0
+        left_shoulder_Z = 0
         if (leftShoulderX > 640 or leftShoulderX < 0) and (leftShoulderY < 0 or leftShoulderX > 480):
             leftShoulderZ = depth_frame[leftShoulderY][leftShoulderX]
         else:
