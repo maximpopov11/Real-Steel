@@ -9,14 +9,14 @@ from time import time
 from sys import exit
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from detect_pose_image_matplot import detectPose
+from detect_pose_image_matplot import detect_pose
 from matplotlib.animation import FuncAnimation
-from lib.landmark_util import getLeftArmLandmarks
+from lib.landmark_util import get_left_arm_landmarks
 
 mp_pose = mp.solutions.pose
 
 pose_video = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.3, model_complexity=2)
-def videoDetection():
+def video_detection():
     video = cv2.VideoCapture(0)
     time1 = 0
 
@@ -25,7 +25,7 @@ def videoDetection():
         if not ok:
             break
         frame_height, frame_width, _ = frame.shape
-        frame, landmarks = detectPose(frame, pose_video, display=False)
+        frame, landmarks = detect_pose(frame, pose_video, display=False)
 
         time2 = time()
         if (time2 - time1) > 0:
@@ -42,7 +42,7 @@ def videoDetection():
 #fig = plt.figure()
 
 #ax = fig.add_subplot(111, projection="3d")
-def getFrame(frame):
+def get_frame(frame):
     video = cv2.VideoCapture(0)
 #    time1 = 0
 
@@ -51,8 +51,8 @@ def getFrame(frame):
         print("error!")
         return
     frame_height, frame_width, _ = frame.shape
-    frame, landmarks = detectPose(frame, pose_video, display=False)
-    leftArm = getLeftArmLandmarks(landmarks)
+    frame, landmarks = detect_pose(frame, pose_video, display=False)
+    leftArm = get_left_arm_landmarks(landmarks)
     Xs, Ys, Zs = [], [], []
     for mark in leftArm:
         Xs.append(mark[0])

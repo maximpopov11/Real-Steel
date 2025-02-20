@@ -49,10 +49,10 @@ def print_result(result: PoseLandmarkerResult, output_image : mp.Image, timestam
     with open("./result.txt", 'w') as fp:
         fp.write("pose landmarker result: {}".format(result))
         
-    leftShoulderX = round(result.pose_landmarks[0][11].x * 640)
-    leftShoulderY = round(result.pose_landmarks[0][11].y * 480)
-    #leftShoulderZ = depth_image[leftShoulderY][leftShoulderX]
-    print(f"{result.pose_landmarks[0][11]} \n({leftShoulderX}, {leftShoulderY}, {leftShoulderZ})")
+    left_shoulder_x = round(result.pose_landmarks[0][11].x * 640)
+    left_shoulder_y = round(result.pose_landmarks[0][11].y * 480)
+    left_shoulder_z = depth_image[left_shoulder_y][left_shoulder_x]
+    print(f"{result.pose_landmarks[0][11]} \n({left_shoulder_x}, {left_shoulder_y}, {left_shoulder_z})")
 
 
     with open("./frame.txt", 'w') as fp:
@@ -64,14 +64,14 @@ options = PoseLandmarkerOptions(
     running_mode=VisionRunningMode.LIVE_STREAM,
     result_callback=print_result
 )
-framesCount = 0
+frames_count = 0
 
 pipeline = configure_pipeline()
 depth_image = []
 done = False
 with PoseLandmarker.create_from_options(options) as landmarker:
     while not done:
-        framesCount+=1
+        frames_count+=1
         frames = pipeline.wait_for_frames()
         depth_frame = frames.get_depth_frame()
         color_frame = frames.get_color_frame()
@@ -100,7 +100,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
 
         #img = Image.fromarray(color_image)
         #img.save(f"./test_02.jpeg")  
-        if framesCount > 50:
+        if frames_count > 50:
             # landmarker is initialized, can use it here
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=color_image)
             #mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)

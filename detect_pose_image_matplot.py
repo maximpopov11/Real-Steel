@@ -42,7 +42,7 @@ if results.pose_landmarks:
         print(f'visibility: {results.pose_landmarks.landmark[mp_pose.PoseLandmark(i).value].visibility}\n')
 '''
 
-def detectPose(image, pose, display=True):
+def detect_pose(image, pose, display=True):
     output_image = image.copy()
     imageRGB = cv2.cvtColor(output_image, cv2.COLOR_BGR2RGB)
 
@@ -74,4 +74,4 @@ def detectPose(image, pose, display=True):
     
 
 pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.3, model_complexity=2)
-detectPose(cv2.imread('./images/tkd.jpeg'), pose)
+detect_pose(cv2.imread('./images/tkd.jpeg'), pose)

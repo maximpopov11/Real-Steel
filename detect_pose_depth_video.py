@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 from time import time
 from lib.depth_cam import configure_pipeline
-from lib.landmark_util import getLeftArmLandmarks
+from lib.landmark_util import get_left_arm_landmarks
 
 mp_pose = mp.solutions.pose
 PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
@@ -19,22 +19,22 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 def make_callback(depth_frame):
     def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
-        leftArm = getLeftArmLandmarks(result)
-        print(leftArm)
+        left_arm = get_left_arm_landmarks(result)
+        print(f"Left Arm: {left_arm}")
         #Xs, Ys, Zs = [], [], []
         #for mark in leftArm:
         #    Xs.append(mark[0])
         #    Ys.append(mark[1])
         #    Zs.append(mark[2])
-        leftShoulderX = round(leftArm[0].x * 640)
-        leftShoulderY = round(leftArm[0].y * 480)
-        leftShoulderZ = 0
-        if (leftShoulderX > 640 or leftShoulderX < 0) and (leftShoulderY < 0 or leftShoulderX > 480):
-            leftShoulderZ = depth_frame[leftShoulderY][leftShoulderX]
+        left_shoulder_x = round(left_arm[0].x * 640)
+        left_shoulder_y = round(left_arm[0].y * 480)
+        left_shoulder_z = 0
+        if (left_shoulder_x > 640 or left_shoulder_x < 0) and (left_shoulder_y < 0 or left_shoulder_x > 480):
+            left_shoulder_z = depth_frame[left_shoulder_y][left_shoulder_x]
         else:
             print("OUT OF BOUNDS")
 
-        print(f"read landmarks! ({leftShoulderX}, {leftShoulderY}, {leftShoulderZ})")
+        print(f"read landmarks! ({left_shoulder_x}, {left_shoulder_y}, {left_shoulder_z})")
         #print("I know about depth data too!", depth_frame)
 
     return callback
@@ -74,7 +74,6 @@ def read_video():
             result_callback=make_callback(depth_image)
         )
 
-        print("hello 0")
         with PoseLandmarker.create_from_options(options) as landmarker:
             landmarker.detect_async(mp_image, int(time() * 1000))
 
