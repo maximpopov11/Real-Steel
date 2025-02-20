@@ -1,5 +1,5 @@
 Header header
 
-float8[3] shoulder
-float8[3] elbow
-float8[3] wrist
+float32[3] shoulder
+float32[3] elbow
+float32[3] wrist
