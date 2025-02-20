@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
@@ -12,7 +12,7 @@ from sys import exit
 mp_pose = mp.solutions.pose
 #from google.colab.patches import cv2_imshow
 
-dir_path = "/home/zhc/Documents/ISU/cs402"
+dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel"
 
 model_path = f"{dir_path}/pose_landmarker_lite.task"
 
@@ -41,7 +41,7 @@ options = PoseLandmarkerOptions(
     result_callback=print_result
 )
 
-cap = cv2.VideoCapture(2)
+cap = cv2.VideoCapture(0)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
 cap.set(cv2.CAP_PROP_FRAME_COUNT, 1)
