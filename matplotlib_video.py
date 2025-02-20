@@ -52,14 +52,14 @@ def get_frame(frame):
         return
     frame_height, frame_width, _ = frame.shape
     frame, landmarks = detect_pose(frame, pose_video, display=False)
-    leftArm = get_left_arm_landmarks(landmarks)
+    left_arm = get_left_arm_landmarks(landmarks)
     Xs, Ys, Zs = [], [], []
-    for mark in leftArm:
+    for mark in left_arm:
         Xs.append(mark[0])
         Ys.append(mark[1])
         Zs.append(mark[2])
 
-    print("read landmarks!", leftArm)
+    print("read landmarks!", left_arm)
     ax.clear()
 #    ax.scatter(Xs, Ys, Zs)
     ax.plot(xs=Xs, ys=Ys, zs=Zs)
