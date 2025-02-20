@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
@@ -9,8 +9,9 @@ from time import time
 from sys import exit
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib_static import detectPose
+from detect_pose_image_matplot import detectPose
 from matplotlib.animation import FuncAnimation
+from lib.landmark_util import getLeftArmLandmarks
 
 mp_pose = mp.solutions.pose
 
@@ -37,13 +38,10 @@ def videoDetection():
     video.release()
     cv2.destroyAllWindows()
 
-videoDetection()
+#videoDetection()
 #fig = plt.figure()
 
 #ax = fig.add_subplot(111, projection="3d")
-def getLeftArmLandmarks(landmarks):
-    return [landmarks[11], landmarks[13], landmarks[15]]
-
 def getFrame(frame):
     video = cv2.VideoCapture(0)
 #    time1 = 0

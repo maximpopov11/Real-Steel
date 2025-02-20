@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
@@ -73,5 +73,5 @@ def detectPose(image, pose, display=True):
         return output_image, landmarks
     
 
-#pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.3, model_complexity=2)
-#detectPose(cv2.imread('./images/tkd.jpeg'), pose)
+pose = mp_pose.Pose(static_image_mode=True, min_detection_confidence=0.3, model_complexity=2)
+detectPose(cv2.imread('./images/tkd.jpeg'), pose)

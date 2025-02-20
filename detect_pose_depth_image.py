@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import numpy as np
@@ -9,7 +9,7 @@ import time
 import cv2
 import time
 from sys import exit
-from depth_cam import configure_pipeline
+from lib.depth_cam import configure_pipeline
 
 #cap = cv2.VideoCapture(1)
 #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)
