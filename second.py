@@ -79,19 +79,22 @@ def plot_landmarks_in_3d(landmark_frames):
         ax.clear()  # Clear previous points
 
         # Extract the 3D coordinates (x, y, z)
-        x_coords = [landmark.x for landmark in landmarks]
-        y_coords = [landmark.y for landmark in landmarks]
-        z_coords = [landmark.z for landmark in landmarks]
+        x_coords = [landmark.x for landmark in landmarks]  # Left/Right
+        y_coords = [landmark.y for landmark in landmarks]  # Up/Down
+        z_coords = [landmark.z for landmark in landmarks]  # Forward/Backward
 
         ax.scatter(x_coords, y_coords, z_coords)
 
         # Label the axes
-        ax.set_xlabel("X")
-        ax.set_ylabel("Y")
-        ax.set_zlabel("Z")
+        ax.set_xlabel("X (Left/Right)")
+        ax.set_ylabel("Y (Up/Down)")
+        ax.set_zlabel("Z (Forward/Backward)")
+
+        # Adjust the view so we mostly see the XY plane
+        ax.view_init(elev=90, azim=90)  # Top-down view looking at the XY plane
 
         plt.draw()
-        plt.pause(0.01)  # Small pause to allow the figure to update
+        plt.pause(0.1)  # Small pause to allow the figure to update
 
     print(f"Found {len(landmark_frames) - skipped} / {len(landmark_frames)}")
 
