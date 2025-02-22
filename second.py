@@ -25,15 +25,18 @@ PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
 
-landmarks = None
+landmarks = []
 
 
 def print_result(
-    result: PoseLandmarkerResult, output_image: mp.Image, timestamp_ms: int, show_background: bool = False
+    result: PoseLandmarkerResult,
+    output_image: mp.Image,
+    timestamp_ms: int,
+    show_background: bool = False,
 ):
     # Extract the landmarks from the result
     global landmarks
-    landmarks = result.pose_landmarks
+    landmarks.append(result.pose_landmarks)
 
     # Convert the image to a numpy array
     output_image_np = output_image.numpy_view()
@@ -59,8 +62,8 @@ def print_result(
 
 def plot_landmarks_in_3d(landmarks):
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    
+    ax = fig.add_subplot(111, projection="3d")
+
     # Extract the 3D coordinates (x, y, z)
     x_coords = [landmark.x for landmark in landmarks]
     y_coords = [landmark.y for landmark in landmarks]
@@ -69,12 +72,11 @@ def plot_landmarks_in_3d(landmarks):
     ax.scatter(x_coords, y_coords, z_coords)
 
     # Label the axes
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
 
     plt.show()
-
 
 
 options = PoseLandmarkerOptions(
@@ -112,6 +114,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         landmarker.detect_async(mp_image, int(time.time() * 1000))
 
 print("beep")
-print(landmarks[0])
+print(len(landmarks))
+print(landmarks[-1][0])
 print("boop")
-plot_landmarks_in_3d(landmarks[0])
+plot_landmarks_in_3d(landmarks[-1][0])
