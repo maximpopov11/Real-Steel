@@ -60,23 +60,36 @@ def print_result(
     # print("pose landmarker result: {}".format(result))
 
 
-def plot_landmarks_in_3d(landmarks):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
+def plot_landmarks_in_3d(landmark_frames):
+    print(f"num landmark frames = {len(landmark_frames)}")
 
-    # Extract the 3D coordinates (x, y, z)
-    x_coords = [landmark.x for landmark in landmarks]
-    y_coords = [landmark.y for landmark in landmarks]
-    z_coords = [landmark.z for landmark in landmarks]
+    for landmark_frame in landmark_frames:
+        if not landmark_frame:
+            # Mediapipe probably didn't find a person in this frame, we can skip it
+            print("skipped")
+            continue
 
-    ax.scatter(x_coords, y_coords, z_coords)
+        print("not skipped")
 
-    # Label the axes
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
+        landmarks = landmark_frame[0]
+        # print(landmarks)
 
-    plt.show()
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+
+        # Extract the 3D coordinates (x, y, z)
+        x_coords = [landmark.x for landmark in landmarks]
+        y_coords = [landmark.y for landmark in landmarks]
+        z_coords = [landmark.z for landmark in landmarks]
+
+        ax.scatter(x_coords, y_coords, z_coords)
+
+        # Label the axes
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+
+        plt.show()
 
 
 options = PoseLandmarkerOptions(
@@ -113,8 +126,4 @@ with PoseLandmarker.create_from_options(options) as landmarker:
         # mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
         landmarker.detect_async(mp_image, int(time.time() * 1000))
 
-print("beep")
-print(len(landmarks))
-print(landmarks[-1][0])
-print("boop")
-plot_landmarks_in_3d(landmarks[-1][0])
+plot_landmarks_in_3d(landmarks)
