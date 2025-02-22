@@ -61,21 +61,22 @@ def print_result(
 
 
 def plot_landmarks_in_3d(landmark_frames):
-    print(f"num landmark frames = {len(landmark_frames)}")
+    plt.ion()  # Turn on interactive mode
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection="3d")
+
+    skipped = 0
 
     for landmark_frame in landmark_frames:
         if not landmark_frame:
             # Mediapipe probably didn't find a person in this frame, we can skip it
-            print("skipped")
+            skipped += 1
             continue
-
-        print("not skipped")
 
         landmarks = landmark_frame[0]
         # print(landmarks)
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection="3d")
+        ax.clear()  # Clear previous points
 
         # Extract the 3D coordinates (x, y, z)
         x_coords = [landmark.x for landmark in landmarks]
@@ -89,7 +90,10 @@ def plot_landmarks_in_3d(landmark_frames):
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
 
-        plt.show()
+        plt.draw()
+        plt.pause(0.01)  # Small pause to allow the figure to update
+
+    print(f"Found {len(landmark_frames) - skipped} / {len(landmark_frames)}")
 
 
 options = PoseLandmarkerOptions(
@@ -117,7 +121,7 @@ with PoseLandmarker.create_from_options(options) as landmarker:
             print("Cant receive frame, exiting...")
 
         count += 1
-        if count == 10:
+        if count == 100:
             break
 
         # cv2.imshow('frame', frame)
