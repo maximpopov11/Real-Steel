@@ -4,11 +4,13 @@ from mediapipe.tasks.python import vision
 from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
-from secret import DIR_PATH
 
 # from google.colab.patches import cv2_imshow
 
-model_path = f"{DIR_PATH}/pose_landmarker_heavy.task"
+# set this to be an absolute path; i believe it has to be absolute
+dir_path = ""
+
+model_path = f"{dir_path}/pose_landmarker_heavy.task"
 
 BaseOptions = mp.tasks.BaseOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
@@ -22,7 +24,7 @@ options = PoseLandmarkerOptions(
 
 with PoseLandmarker.create_from_options(options) as landmarker:
     # landmarker is initialized, can use it here
-    mp_image = mp.Image.create_from_file(f"{DIR_PATH}/tkd.jpeg")
+    mp_image = mp.Image.create_from_file(f"{dir_path}/tkd.jpeg")
     # mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
     result = landmarker.detect(mp_image)
     annotated = draw_landmarks_on_image(mp_image.numpy_view(), result)
