@@ -1,3 +1,6 @@
+# I didn't want to deal with env vars so I made a file to hold the absolute path to the current directory
+secret.py
+
 .vscode
 
 devel/
@@ -8,3 +11,6 @@ build/
 
 __pycache__/*
 test/*
+venv/
+.DS_Store
+*.pyc
