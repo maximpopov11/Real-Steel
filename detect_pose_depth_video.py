@@ -1,7 +1,7 @@
 import numpy as np
 from time import time
-from ros_ws.src.robot_side.lib.depth_cam import configure_pipeline
-from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
+from lib.depth_cam import configure_pipeline
+from lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 def make_callback(depth_frame):
     def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):

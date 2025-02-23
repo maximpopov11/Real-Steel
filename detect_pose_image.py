@@ -2,7 +2,7 @@ import mediapipe as mp
 from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
-from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
+from lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 model_path = f"{dir_path}/lib/pose_landmarker_heavy.task"
 

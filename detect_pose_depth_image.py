@@ -5,8 +5,8 @@ import numpy as np
 import time
 import cv2
 import time
-from ros_ws.src.robot_side.lib.depth_cam import configure_pipeline
-from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
+from lib.depth_cam import configure_pipeline
+from lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 #cap = cv2.VideoCapture(1)
 #cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)

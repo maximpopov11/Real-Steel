@@ -1,11 +1,11 @@
-from ros_ws.src.robot_side.lib.draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
 import cv2.legacy
 import time
 from sys import exit
-from ros_ws.src.robot_side.lib.mp_util import PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
+from lib.mp_util import PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 mp_pose = mp.solutions.pose
 

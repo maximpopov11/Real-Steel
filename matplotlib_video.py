@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from ros_ws.src.robot_side.lib.draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from detect_pose_image_matplot import detect_pose
 from matplotlib.animation import FuncAnimation
-from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks
-from ros_ws.src.robot_side.lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
+from lib.mp_util import get_left_arm_landmarks
+from lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 mp_pose = mp.solutions.pose
 
