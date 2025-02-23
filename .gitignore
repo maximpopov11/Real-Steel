@@ -1,4 +1,15 @@
+# I didn't want to deal with env vars so I made a file to hold the absolute path to the current directory
+secret.py
+
+.vscode
+
+devel/
+
+build/
+
+.catkin_workspace
+
+*/__pycache__/*
+
 venv/
 .DS_Store
-__pycache__/
-secret.py

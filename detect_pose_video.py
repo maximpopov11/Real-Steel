@@ -1,7 +1,7 @@
 import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
-from draw import draw_landmarks_on_image
+from lib.draw import draw_landmarks_on_image
 import cv2
 from PIL import Image
 import cv2
@@ -16,7 +16,9 @@ from mpl_toolkits.mplot3d import Axes3D
 mp_pose = mp.solutions.pose
 # from google.colab.patches import cv2_imshow
 
-model_path = f"{DIR_PATH}/pose_landmarker_lite.task"
+dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel"
+
+model_path = f"{dir_path}/pose_landmarker_lite.task"
 
 BaseOptions = mp.tasks.BaseOptions
 PoseLandmarker = mp.tasks.vision.PoseLandmarker
