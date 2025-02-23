@@ -89,9 +89,10 @@ def make_callback(depth_frame):
             y_coord = round(point.y * 480)
             if x_coord >= CAMERA_WIDTH or x_coord < 0 or y_coord < 0 or y_coord >= CAMERA_HEIGHT:
                 print(f"OUT OF BOUNDS ({x_coord}, {y_coord})")
+                arms_with_depth.append((x_coord, y_coord, 0))
                 return
 
-            z_coord = depth_frame[y_coord][x_coord]
+            z_coord = depth_frame.get_distance(x_coord, y_coord)
             arms_with_depth.append((x_coord, y_coord, z_coord))
             print(f"READ ({int(time()*1000) - timestamp_ms}ms): {arms_with_depth}")
 
@@ -128,7 +129,7 @@ def run():
             continue
 
         # Convert images to numpy arrays
-        depth_image = np.asanyarray(depth_frame.get_data())
+        #depth_image = np.asanyarray(depth_frame.get_data())
         color_image = np.asanyarray(color_frame.get_data())
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=color_image)
@@ -136,7 +137,7 @@ def run():
         options = PoseLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
             running_mode=VisionRunningMode.LIVE_STREAM,
-            result_callback=make_callback(depth_image)
+            result_callback=make_callback(depth_frame)
         )
 
         with PoseLandmarker.create_from_options(options) as landmarker:
