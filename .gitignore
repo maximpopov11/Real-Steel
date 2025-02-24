@@ -8,6 +8,7 @@ devel/
 build/
 
 .catkin_workspace
+.catkin_tools/
 
 __pycache__/*
 test/*
