@@ -60,11 +60,6 @@ def plot_landmarks_in_3d(msg):
 
 #    print(f"Found {len(landmark_frames) - skipped} / {len(landmark_frames)}")
 
-
-
-def display(msg):
-    print("hello", msg)
-
 def app():
     sub = rospy.Subscriber('arms', arm, plot_landmarks_in_3d)
     rospy.init_node('POSE_Display', anonymous=True)
@@ -73,7 +68,7 @@ def app():
         #print("xcoords", x_coords)
         ax.set_xlim([0, 640])
         ax.set_ylim([0, 480])
-        ax.set_zlim([0, 10])
+        ax.set_zlim([0, 4])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")
         ax.set_zlabel("Z (Forward/Backward)")
@@ -90,8 +85,6 @@ def app():
 
 #        plt.draw()
  #       plt.pause(0.1)  # Small pause to allow the figure to update
-
-
 
     rospy.spin()
     

@@ -5,6 +5,7 @@ from custom_msg.msg import arm
 from time import time
 import numpy as np
 import mediapipe as mp
+import pyrealsense2 as rs
 
 mp = mp
 mp_pose = mp.solutions.pose
@@ -19,6 +20,10 @@ dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel/ros_ws/src/robot_side"
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
+
+align_to = rs.stream.color
+align = rs.align(align_to)
+
 
 """
 Given a PoseLandmarker result, extract the data for the left shoulder, elbow, and wrist.
@@ -44,7 +49,6 @@ def get_arm_landmarks(result : PoseLandmarkerResult):
     return [landmarks[11], landmarks[13], landmarks[15], landmarks[12], landmarks[14], landmarks[16]]
 
 
-import pyrealsense2 as rs
 
 def configure_pipeline():
     # Configure depth and color streams
@@ -108,24 +112,26 @@ def make_callback(depth_frame):
         print("sent!")
         pub.publish(msg)
 
-
     return callback
 
 def run():
     
-    rospy.init_node('robot_camera', anonymous=True)
+    rospy.init_node('robot_camera', anonymous=True) 
 
     rate = rospy.Rate(10)
 
     model_path = f"{dir_path}/lib/pose_landmarker_lite.task"
-
+    
     # Depth Camera Pipelin
     pipeline = configure_pipeline()
     while not rospy.is_shutdown():
         frames = pipeline.wait_for_frames()
         depth_frame = frames.get_depth_frame()
+        aligned_frames = align.process(frames)
+        aligned_depth_frame = aligned_frames.get_depth_frame() # aligned_depth_frame is a 640x480 depth image
+
         color_frame = frames.get_color_frame()
-        if not depth_frame or not color_frame:
+        if not aligned_depth_frame or not color_frame:
             continue
 
         # Convert images to numpy arrays
@@ -134,16 +140,17 @@ def run():
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=color_image)
 
-        options = PoseLandmarkerOptions(
+        with PoseLandmarker.create_from_options(PoseLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
             running_mode=VisionRunningMode.LIVE_STREAM,
-            result_callback=make_callback(depth_frame)
-        )
-
-        with PoseLandmarker.create_from_options(options) as landmarker:
+            result_callback=make_callback(aligned_depth_frame)
+        )) as landmarker:
             landmarker.detect_async(mp_image, int(time() * 1000))
 
-        rate.sleep()
+        # rospy.loginfo(msg) # will continue to log in CLI msg being sent
+        
+        #pub.publish(msg)
+        #rate.sleep()
 
 if __name__ == '__main__':
     try:
