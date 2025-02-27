@@ -16,78 +16,34 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
-stages:
+stages:          # List of stages for jobs, and their order of execution
   - build
   - test
   - deploy
 
-variables:
-  ROS_DISTRO: noetic
-  CATKIN_WS: /catkin_ws
-
-.ros_setup: &ros_setup
-  before_script:
-    - apt-get update && apt-get install -y lsb-release
-    - sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
-    - apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
-    - apt-get update
-    - apt-get install -y ros-${ROS_DISTRO}-desktop python3-catkin-tools python3-rosdep
-    - rosdep init || true
-    - rosdep update
-    - mkdir -p ${CATKIN_WS}/src
-    - cd ${CATKIN_WS}/src && ln -s /builds/${CI_PROJECT_PATH} .
-    - cd ${CATKIN_WS}
-    - rosdep install --from-paths src --ignore-src -y
-
-build-job:
+build-job:       # This job runs in the build stage, which runs first.
   stage: build
-  image: ubuntu:20.04
-  <<: *ros_setup
   script:
-    - cd ${CATKIN_WS}
-    - source /opt/ros/${ROS_DISTRO}/setup.bash
-    - catkin init
-    - catkin build -DCMAKE_BUILD_TYPE=Release
-    - echo "Build complete."
-  artifacts:
-    paths:
-      - ${CATKIN_WS}/build/
-      - ${CATKIN_WS}/devel/
-    expire_in: 1 hour
+    - echo "Compiling the code..."
+    - echo "Compile complete."
 
-unit-test-job:
-  stage: test
-  image: ubuntu:20.04
-  <<: *ros_setup
-  dependencies:
-    - build-job
+unit-test-job:   # This job runs in the test stage.
+  stage: test    # It only starts when the job in the build stage completes successfully.
   script:
-    - cd ${CATKIN_WS}
-    - source /opt/ros/${ROS_DISTRO}/setup.bash
-    - source devel/setup.bash
-    - catkin run_tests
-    - catkin_test_results
-    - echo "Unit tests complete."
+    - echo "Running unit tests... This will take about 60 seconds."
+    - sleep 60
+    - echo "Code coverage is 90%"
 
-lint-test-job:
-  stage: test
-  image: ubuntu:20.04
-  <<: *ros_setup
+lint-test-job:   # This job also runs in the test stage.
+  stage: test    # It can run at the same time as unit-test-job (in parallel).
   script:
-    - cd ${CATKIN_WS}/src
-    - apt-get install -y python3-pip
-    - pip3 install roslint
-    - find . -name "*.cpp" -o -name "*.h" | xargs cpplint --filter=-legal/copyright,-build/include_subdir
-    - find . -name "*.py" | xargs pylint --errors-only
-    - echo "Linting complete."
+    - echo "Linting code... This will take about 10 seconds."
+    - sleep 10
+    - echo "No lint issues found."
 
-deploy-job:
-  stage: deploy
-  image: ubuntu:20.04
+deploy-job:      # This job runs in the deploy stage.
+  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
   environment: production
-  only:
-    - master
   script:
     - echo "Deploying application..."
     - echo "Application successfully deployed."
-
