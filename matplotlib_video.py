@@ -11,7 +11,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from detect_pose_image_matplot import detect_pose
 from matplotlib.animation import FuncAnimation
-from lib.landmark_util import get_left_arm_landmarks
+from lib.mp_util import get_left_arm_landmarks
+from lib.mp_util import get_left_arm_landmarks, PoseLandmarkerResult, PoseLandmarker, PoseLandmarkerOptions, BaseOptions, VisionRunningMode, mp, dir_path
 
 mp_pose = mp.solutions.pose
 

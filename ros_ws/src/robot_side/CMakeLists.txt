@@ -156,7 +156,22 @@ include_directories(
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/camera.py
+  scripts/camera.py 
+  lib/depth_cam.py 
+  lib/draw.py
+  lib/mp_util.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+catkin_install_python(PROGRAMS
+  lib/depth_cam.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+catkin_install_python(PROGRAMS
+  lib/draw.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+catkin_install_python(PROGRAMS
+  lib/mp_util.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

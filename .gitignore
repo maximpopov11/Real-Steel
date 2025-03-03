@@ -7,10 +7,14 @@ devel/
 
 build/
 
+.venv/
+
 .catkin_workspace
+.catkin_tools/
 
-*/__pycache__/*
-
+__pycache__/*
+test/*
 venv/
 .DS_Store
 *.pyc
+
