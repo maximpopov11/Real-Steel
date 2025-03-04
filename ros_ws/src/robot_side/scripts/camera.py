@@ -1,5 +1,5 @@
 import rospy
-from custom_msg.msg import arm
+from custom_msg.msg import landmarks
 #from lib.mp_util import PoseLandmarker, PoseLandmarkerOptions, PoseLandmarkerResult, BaseOptions, VisionRunningMode, get_left_arm_landmarks, mp, dir_path
 #from lib.depth_cam import configure_pipeline
 from time import time
@@ -42,11 +42,42 @@ def get_right_arm_landmarks(result : PoseLandmarkerResult):
     return [landmarks[12], landmarks[14], landmarks[16]]
 """
 Given a PoseLandmarker result, extract the data for the arms.
-Returns a list containing, in order, left shoulder elbow wrist right shoulder elbow wrist
+Returns a list containing, in order:
+- left hip
+- right hip
+- left shoulder
+- right shoulder
+- left elbow
+- right elbow
+- left wrist
+- right wrist
+- left pinky
+- right pinky
+- left index
+- right index
+- left thumb
+- right thumb
+- nose
 """
-def get_arm_landmarks(result : PoseLandmarkerResult):
+def get_relevant_landmarks(result : PoseLandmarkerResult):
     landmarks = result.pose_landmarks[0]
-    return [landmarks[11], landmarks[13], landmarks[15], landmarks[12], landmarks[14], landmarks[16]]
+    return [
+            landmarks[23], 
+            landmarks[24], 
+            landmarks[11], 
+            landmarks[12], 
+            landmarks[13], 
+            landmarks[14], 
+            landmarks[15], 
+            landmarks[16],
+            landmarks[17],
+            landmarks[18],
+            landmarks[19],
+            landmarks[20],
+            landmarks[21],
+            landmarks[22],
+            landmarks[0]
+        ]
 
 
 
@@ -67,7 +98,7 @@ def configure_pipeline():
             found_rgb = True
             break
     if not found_rgb:
-        print("The demo requires Depth camera with Color sensor")
+        print("Must RGB Depth Camera")
         exit(0)
 
     config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
@@ -77,36 +108,46 @@ def configure_pipeline():
     pipeline.start(config)
     return pipeline
 
-pub = rospy.Publisher('arms', arm, queue_size=10)
+pub = rospy.Publisher('landmarks', landmarks, queue_size=10)
 
 def make_callback(depth_frame):
     def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
         if len(result.pose_landmarks) == 0:
             return
 
-        arm_landmarks = get_arm_landmarks(result)
-        print(f"Arm: {arm_landmarks}")
+        relevant_landmarks = get_relevant_landmarks(result)
+        print(f"Arm: {relevant_landmarks}")
 
-        arms_with_depth = []
-        for point in arm_landmarks:
+        landmarks_with_depth = []
+        for point in relevant_landmarks:
             x_coord = round(point.x * 640)
             y_coord = round(point.y * 480)
             if x_coord >= CAMERA_WIDTH or x_coord < 0 or y_coord < 0 or y_coord >= CAMERA_HEIGHT:
                 print(f"OUT OF BOUNDS ({x_coord}, {y_coord})")
-                arms_with_depth.append((x_coord, y_coord, 0))
+                landmarks_with_depth.append((x_coord, y_coord, 0))
                 return
 
             z_coord = depth_frame.get_distance(x_coord, y_coord)
-            arms_with_depth.append((x_coord, y_coord, z_coord))
-            print(f"READ ({int(time()*1000) - timestamp_ms}ms): {arms_with_depth}")
+            landmarks_with_depth.append((x_coord, y_coord, z_coord))
+            print(f"READ ({int(time()*1000) - timestamp_ms}ms): {landmarks_with_depth}")
 
-        msg = arm()
-        msg.left_shoulder = arms_with_depth[0]
-        msg.left_elbow = arms_with_depth[1]
-        msg.left_wrist = arms_with_depth[2]
-        msg.right_shoulder = arms_with_depth[3]
-        msg.right_elbow = arms_with_depth[4]
-        msg.right_wrist = arms_with_depth[5]
+        msg = landmarks()
+        msg.left_hip = landmarks_with_depth[0]
+        msg.right_hip = landmarks_with_depth[1]
+        msg.left_shoulder = landmarks_with_depth[2]
+        msg.right_shoulder = landmarks_with_depth[3]
+        msg.left_elbow = landmarks_with_depth[4]
+        msg.right_elbow = landmarks_with_depth[5]
+        msg.left_wrist = landmarks_with_depth[6]
+        msg.right_wrist = landmarks_with_depth[7]
+        msg.left_pinky = landmarks_with_depth[8]
+        msg.right_pinky = landmarks_with_depth[9]
+        msg.left_index = landmarks_with_depth[10]
+        msg.right_index = landmarks_with_depth[11]
+        msg.left_thumb = landmarks_with_depth[12]
+        msg.right_thumb = landmarks_with_depth[13]
+        msg.nose = landmarks_with_depth[14]
+
 
         # rospy.loginfo(msg) # will continue to log in CLI msg being sent
         print("sent!")
