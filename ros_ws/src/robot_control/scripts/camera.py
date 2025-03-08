@@ -16,7 +16,7 @@ PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
 mpImage = mp.Image
 
-dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel/ros_ws/src/robot_side"
+dir_path = "/home/zhc/Documents/ISU/cs402/sd15_reel-steel/ros_ws/src/robot_control"
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -156,13 +156,13 @@ def make_callback(depth_frame):
     return callback
 
 def run():
-    
-    rospy.init_node('robot_camera', anonymous=True) 
+
+    rospy.init_node('robot_camera', anonymous=True)
 
     rate = rospy.Rate(10)
 
     model_path = f"{dir_path}/lib/pose_landmarker_lite.task"
-    
+
     # Depth Camera Pipelin
     pipeline = configure_pipeline()
     while not rospy.is_shutdown():
@@ -189,7 +189,7 @@ def run():
             landmarker.detect_async(mp_image, int(time() * 1000))
 
         # rospy.loginfo(msg) # will continue to log in CLI msg being sent
-        
+
         #pub.publish(msg)
         #rate.sleep()
 
