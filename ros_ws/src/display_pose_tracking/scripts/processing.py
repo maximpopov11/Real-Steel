@@ -22,31 +22,34 @@ def find_missing_points(
 
 def smooth_points(bodypoint_queue: Dict[int, Bodypoints], index: int) -> Bodypoints:
     """
-    Using the old_points, smooth these new_points.
+    Use points in surrounding frames to smoothen points, ignoring differences within a small margin.
     """
     pass
 
 
-def check_feasability(points: arm_markers) -> bool:
+def get_robotangles(bodypoints: Bodypoints) -> RobotAngles:
     """
-    Given these points return if a human or robot could
-    actually achieve this position. For example, is this
-    arm abnormally long?
+    Map the given bodypoints to robot angles.
     """
     pass
 
 
-def check_thresholds(new_points: arm_markers) -> bool:
+def restrain_angles(robot_angles: RobotAngles) -> RobotAngles:
     """
-    Using the old_points, check if these new_points
-    exceed our allowed speed and directional limits.
+    Restrain the given robot_angles to disallow any infeasible angles.
     """
     pass
 
 
-def check_safe_zones(points: arm_markers) -> bool:
+def restrain_position(bodypoints: Bodypoints) -> Bodypoints:
     """
-    Given the points, check if these points
-    encroach our human, robot, and environmental safe zones.
+    Restrain the given bodypoints to disallow contact with the self or with the cord at the back of the head.
+    """
+    pass
+
+
+def restrain_speed(former_bodypoints: Bodypoints, bodypoints: Bodypoints) -> Bodypoints:
+    """
+    Restrain the given bodypoints to disallow moving faster than the threshold.
     """
     pass
