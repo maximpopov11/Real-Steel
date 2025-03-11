@@ -9,6 +9,12 @@ plt.ion()  # Turn on interactive mode
 fig = plt.figure()
 ax = fig.add_subplot(111, projection="3d")
 
+def on_close(event):
+    rospy.signal_shutdown("Matplotlib window closing")
+
+fig.canvas.mpl_connect('close_event', on_close)
+
+
 # Label the axes
 # Adjust the view so we mostly see the XY plane
 ax.view_init(elev=90, azim=90)  # Top-down view looking at the XY plane
@@ -76,7 +82,8 @@ def app():
     sub = rospy.Subscriber('landmarks', landmarks, plot_landmarks_in_3d)
     rospy.init_node('POSE_Display', anonymous=True)
 
-    while True:
+    while not rospy.is_shutdown():
+    # while True:
         #print("xcoords", x_coords)
         # Ensure the bounds of the graph are drawn correctly
         ax.set_xlim([0, 640])
@@ -97,7 +104,9 @@ def app():
 
         ax.clear()  # Clear previous points
         ax.scatter(x_coords, y_coords, z_coords, color=['red', 'blue', 'red', 'blue', 'red', 'blue', 'red', 'blue', 'black', 'black', 'black', 'black', 'green', 'green', 'purple'])
-        print(f"Left Wrist: ({x_coords[2]}, {y_coords[2]}, {z_coords[2]})")    
+        print(f"Left Wrist: ({x_coords[2]}, {y_coords[2]}, {z_coords[2]})")   
+
+    print("exited loop")
     
 if __name__ == '__main__':
     try:
