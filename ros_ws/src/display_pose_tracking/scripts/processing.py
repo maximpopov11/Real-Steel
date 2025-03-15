@@ -3,7 +3,8 @@ from model import Bodypoints, RobotAngles
 
 
 def process_bodypoints(
-    bodypoint_queue: Dict[int, Bodypoints], robot_angles: Dict[int, RobotAngles]
+    bodypoints_by_timestamp: Dict[int, Bodypoints],
+    robot_angles_by_timestamp: Dict[int, RobotAngles],
 ):
     """
     Spawn threads to process Bodypoints and convert them into RobotAngles.
@@ -12,7 +13,7 @@ def process_bodypoints(
 
 
 def find_missing_points(
-    bodypoint_queue: Dict[int, Bodypoints], index: int
+    bodypoints_by_timestamp: Dict[int, Bodypoints], timestamp: int
 ) -> Bodypoints:
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints.
