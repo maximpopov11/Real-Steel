@@ -1,8 +1,7 @@
-from typing import Dict
-from model import RobotAngles
+from custom_types import ts_RobotAngles_t
 
 
-def publish_points(robot_angles: Dict[int, RobotAngles]):
+def publish_angles(robot_angles: ts_RobotAngles_t):
     """
     On a regular interval, publish the next unpublished
     RobotAngles if they are available, or no-op otherwise.

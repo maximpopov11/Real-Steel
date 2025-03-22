@@ -1,7 +1,12 @@
 import pyrealsense2 as rs
+from time import time
 
 CAMERA_IMAGE_WIDTH = 640
 CAMERA_IMAGE_HEIGHT = 480
+
+def timestamp():
+    """Returns the current time in milliseconds since the epoch using time()."""
+    return int(time() * 1000)
 
 def setup_depth_pipeline():
     # Configure depth and color streams
