@@ -24,13 +24,17 @@ def app():
         
         if len(frame_queue) > 0:
             camera_frame = heapq.heappop(frame_queue)
+            pre_get_bp = timestamp()
             get_bodypoints(camera_frame, bodypoints_queue)
+            post_get_bp = timestamp()
         else:
             print("  SKIP camera")
         
         if len(bodypoints_queue) > 0:
+            pre_proc_bp = timestamp()
             bodypoints_frame = heapq.heappop(bodypoints_queue)
             process_bodypoints(bodypoints_frame, robotangles_queue)
+            post_proc_bp = timestamp()
         else:
             print("  SKIP bodypoints")
         
@@ -41,7 +45,7 @@ def app():
             print("  SKIP robotangles")
         
         post_ts = timestamp()
-        print(f"Completed framework loop in {post_ts - pre_ts}ms!")
+        print(f"Completed framework loop in {post_ts - pre_ts}ms!\n  get_bodypoints: {post_get_bp - pre_get_bp}ms\n  process_bodypoints: {post_proc_bp - pre_proc_bp}ms")
     
     
 if __name__ == '__main__':

@@ -1,50 +1,72 @@
-from custom_types import Frame_Pair_t, q_Bodypoints_t
+from custom_types import ts_Frame_Pair_t, q_Bodypoints_t
+from util import MP_FULL_MODEL_PATH, CAMERA_IMAGE_HEIGHT, CAMERA_IMAGE_WIDTH
+import numpy.typing as nptyping
+from heapq import heappush
+import mediapipe as MP
+from _collections_abc import Callable
 
-def get_bodypoints(frame_pair: Frame_Pair_t, bodypoints_queue: q_Bodypoints_t):
-    """
-    Get raw bodypoints using Mediapipe.
-    """
-    pass
 
+mp_pose = MP.solutions.pose
+PoseLandmarkerResult = MP.tasks.vision.PoseLandmarkerResult
+BaseOptions = MP.tasks.BaseOptions
+PoseLandmarker = MP.tasks.vision.PoseLandmarker
+PoseLandmarkerOptions = MP.tasks.vision.PoseLandmarkerOptions
+VisionRunningMode = MP.tasks.vision.RunningMode
+mpImage = MP.Image
+
+Result_Depth_Callback = Callable[[PoseLandmarkerResult, mpImage, int], None]
 """
-from typing import Dict
-import pyrealsense2 as rs
-import numpy as np
-from time import time
-from model import Bodypoints
-from util import MP, setup_depth_pipeline, make_detect_async_callback, detect_with_callback, MP_FULL_MODEL_PATH
-from custom_types import *
-
-def publish_frame(rospy, frame_queue: Dict[int, Frame_Pair]):
-    Using a camera, publish video frames to the
-    given indexed queue at regular intervals.
-
-    align_to = rs.stream.color
-    align = rs.align(align_to)
-    pipeline = setup_depth_pipeline()
-    while not rospy.is_shutdown():
-        frames = pipeline.wait_for_frames()
-        depth_frame = frames.get_depth_frame()
-        aligned_frames = align.process(frames)
-        aligned_depth_frame = aligned_frames.get_depth_frame() # aligned_depth_frame is a 640x480 depth image
-
-        color_frame = frames.get_color_frame()
-        if not aligned_depth_frame or not color_frame:
-            continue
-
-        # Convert color frame to numpy array
-        color_frame_array = np.asanyarray(color_frame.get_data())
-
-        frame_queue[int(time() * 1000)] = (color_frame_array, depth_frame)
+Type of the callback that receives the result of mediapipe detect_async.
+"""
 
 
-def get_bodypoints(frame_pair : Frame_Pair, bodypoints_queue: Dict[int, Bodypoints]) -> Bodypoints:
-    
-    Get raw bodypoints using Mediapipe.
-    mp_image = MP.Image(image_format=MP.ImageFormat.SRGB, data=frame_pair[0])
-    model_path = MP_FULL_MODEL_PATH
+def make_detect_async_callback(depth_frame, bodypoints_queue):
+    """
+    Given a depth frame and a bodypoints_queue, form a closure and create a function 
+    that will use said depth frame and queue to add depth coordinates to the PoseLandmarkerResult, and then add the resulting
+    Bodypoints_t to the queue.
+    """
+
+    def callback(result: PoseLandmarkerResult, output_image : MP.Image, timestamp_ms: int):
+        if len(result.pose_landmarks) == 0:
+            return
+
+        landmarks = result[0]
+        print(f"Landmarks: {landmarks}")
+
+        landmarks_with_depth = []
+        for point in landmarks:
+            x_coord = round(point.x * CAMERA_IMAGE_WIDTH)
+            y_coord = round(point.y * CAMERA_IMAGE_WIDTH)
+            if x_coord >= CAMERA_IMAGE_WIDTH or x_coord < 0 or y_coord < 0 or y_coord >= CAMERA_IMAGE_HEIGHT:
+                print(f"OUT OF BOUNDS ({x_coord}, {y_coord})")
+                landmarks_with_depth.append((x_coord, y_coord, 0))
+                return
+
+            z_coord = depth_frame.get_distance(x_coord, y_coord)
+            landmarks_with_depth.append((x_coord, y_coord, z_coord))
+            #print(f"READ ({timestamp_ms() - timestamp_ms}ms): {landmarks_with_depth}")
+        heappush(bodypoints_queue, (timestamp_ms, landmarks_with_depth))
+
+    return callback
+
+def detect_with_callback(timestamp : int, mp_image : nptyping.NDArray, model_path : str, callback : Result_Depth_Callback):
+    """
+    Creates a Mediapipe PoseLandmarker with the provided model and callback function, and calls detect_async on it
+    """
+    with PoseLandmarker.create_from_options(PoseLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=model_path),
+        running_mode=VisionRunningMode.LIVE_STREAM,
+        result_callback=callback
+    )) as landmarker:
+        landmarker.detect_async(mp_image, timestamp)
+
+
+def get_bodypoints(frame_pair: ts_Frame_Pair_t, bodypoints_queue: q_Bodypoints_t):
+    """
+    Given a timestamp and the corresponding Frame_Pair, asynchronously generate Bodypoints and load them into the provided bodypoints_queue.
+    """
+    mp_image = MP.Image(image_format=MP.ImageFormat.SRGB, data=frame_pair[1])
     callback = make_detect_async_callback(frame_pair[1], bodypoints_queue)
     
-    detect_with_callback(mp_image, model_path, callback)
-
-"""
+    detect_with_callback(frame_pair[0], mp_image, MP_FULL_MODEL_PATH, callback)
