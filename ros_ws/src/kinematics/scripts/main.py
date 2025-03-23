@@ -1,8 +1,8 @@
 import rospy
 from custom_msg.msg import Landmarks, Angles
-from lib.util import timestamp
+from kin_util import timestamp
 
-pub = rospy.Publisher('robot_angles', Landmarks, queue_size=10)
+pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
 
 def generate_angles(msg):
     """

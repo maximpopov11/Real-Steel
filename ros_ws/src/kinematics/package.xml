@@ -52,6 +52,8 @@
 
   <build_depend>custom_msg</build_depend>
   <exec_depend>custom_msg</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>kin_util</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

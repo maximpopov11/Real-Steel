@@ -2,7 +2,7 @@ from distutils.core import setup
 from catkin_pkg.python_setup import generate_distutils_setup
 
 d = generate_distutils_setup(
-    packages=['lib.util'],
-    package_dir={'': '.'}
+    packages=['kin_util'],
+    package_dir={'': 'scripts'}
 )
 setup(**d)

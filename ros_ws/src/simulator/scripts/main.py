@@ -1,6 +1,6 @@
 import rospy
 from custom_msg.msg import Angles
-from lib.util import timestamp
+from sim_util import timestamp
 
 def use_angles(msg):
     """
