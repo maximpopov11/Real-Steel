@@ -1,6 +1,5 @@
 from typing import Dict
-from model import Bodypoints_t, Robot_Angles_t
-from custom_types import ts_Bodypoints_t, q_Robot_Angles_t
+from custom_types import ts_Bodypoints_t, q_Robot_Angles_t, Bodypoints_t, Robot_Angles_t
 from threading import Thread
 from asyncio import sleep
 from heapq import heappush
