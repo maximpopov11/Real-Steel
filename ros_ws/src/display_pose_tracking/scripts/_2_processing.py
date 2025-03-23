@@ -16,14 +16,10 @@ def process_bodypoints(
     """
     Spawn threads to process Bodypoints and load them into the RobotAngles queue.
     """
-    angle_thread = Thread(target=generate_mock_bodypoints, args=(bodypoints_by_timestamp, robot_angles_queue))
-    angle_thread.run()
     pass
 
 
-def find_missing_points(
-    bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int
-) -> Bodypoints_t:
+def find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int) -> Bodypoints_t:
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints.
     """
@@ -51,15 +47,17 @@ def restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
     pass
 
 
-def restrain_position(bodypoints: Bodypoints_t) -> Bodypoints_t:
+def restrain_position(robot_angles: Robot_Angles_t) -> Bodypoints_t:
     """
     Restrain the given bodypoints to disallow contact with the self or with the cord at the back of the head.
+    This will use the given robot_angles to calculate the robot's bodypoints and restrain them as necessary.
     """
+    # TODO: calculate robot bodypoints (or type, we don't need all 33 points), then restrain them, and use them in restrain_speed too
     pass
 
 
-def restrain_speed(former_bodypoints: Bodypoints_t, bodypoints: Bodypoints_t) -> Bodypoints_t:
+def restrain_speed(former_robot_bodypoints: Bodypoints_t, robot_bodypoints: Bodypoints_t) -> Bodypoints_t:
     """
-    Restrain the given bodypoints to disallow moving faster than the threshold.
+    Restrain the given robot bodypoints to disallow moving faster than the threshold.
     """
     pass
