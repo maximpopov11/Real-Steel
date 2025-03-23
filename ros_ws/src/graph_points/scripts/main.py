@@ -1,5 +1,5 @@
 import rospy
-from custom_msg.msg import landmarks
+from custom_msg.msg import Landmarks
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
@@ -79,7 +79,7 @@ def plot_landmarks_in_3d(msg):
     ]
 
 def app():
-    sub = rospy.Subscriber('landmarks', landmarks, plot_landmarks_in_3d)
+    sub = rospy.Subscriber('landmarks', Landmarks, plot_landmarks_in_3d)
     rospy.init_node('POSE_Display', anonymous=True)
 
     while not rospy.is_shutdown():
