@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(robot_control)
+project(kinematics)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -100,7 +100,7 @@ find_package(catkin REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES robot_control
+#  LIBRARIES kinematics
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -118,7 +118,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/robot_control.cpp
+#   src/${PROJECT_NAME}/kinematics.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -129,7 +129,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/robot_control_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/kinematics_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,22 +156,8 @@ include_directories(
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/camera.py
-  lib/depth_cam.py
-  lib/draw.py
-  lib/mp_util.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-catkin_install_python(PROGRAMS
-  lib/depth_cam.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-catkin_install_python(PROGRAMS
-  lib/draw.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-catkin_install_python(PROGRAMS
-  lib/mp_util.py
+  scripts/main.py
+  lib/util.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -208,7 +194,7 @@ catkin_install_python(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/robot_control.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/kinematics.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
