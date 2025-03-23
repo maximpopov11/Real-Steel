@@ -5,7 +5,7 @@ from threading import Thread
 from asyncio import sleep
 from heapq import heappush
 
-async def generate_bodypoints(bodypoints_by_timestamp: ts_Bodypoints_t, robot_angles_queue: q_Robot_Angles_t,):
+async def generate_mock_bodypoints(bodypoints_by_timestamp: ts_Bodypoints_t, robot_angles_queue: q_Robot_Angles_t,):
     await sleep(.02)
 
     heappush(robot_angles_queue, (bodypoints_by_timestamp[0], [0, 0, 0, 0]))
@@ -17,7 +17,7 @@ def process_bodypoints(
     """
     Spawn threads to process Bodypoints and load them into the RobotAngles queue.
     """
-    angle_thread = Thread(target=generate_bodypoints, args=(bodypoints_by_timestamp, robot_angles_queue))
+    angle_thread = Thread(target=generate_mock_bodypoints, args=(bodypoints_by_timestamp, robot_angles_queue))
     angle_thread.run()
     pass
 
