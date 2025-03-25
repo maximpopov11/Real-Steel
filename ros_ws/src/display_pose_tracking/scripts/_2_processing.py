@@ -1,6 +1,5 @@
 from typing import Dict
-from custom_types import ts_Bodypoints_t, q_Robot_Angles_t, Bodypoints_t, Robot_Angles_t
-from threading import Thread
+from custom_types import ts_Bodypoints_t, q_Robot_Angles_t, Bodypoints_t, Robot_Angles_t, q_Bodypoints_t
 from asyncio import sleep
 from heapq import heappush
 
@@ -9,6 +8,8 @@ async def generate_mock_bodypoints(bodypoints_by_timestamp: ts_Bodypoints_t, rob
 
     heappush(robot_angles_queue, (bodypoints_by_timestamp[0], [0, 0, 0, 0]))
 
+# TODO: Our bodypoints_by_timestamp is a heap, but I want a dict for efficient access to arbitrary timestamps, can we just dict it instead?
+# TODO: we need to add locks to all of our multi-threaded heaps
 def process_bodypoints(
     bodypoints_by_timestamp: ts_Bodypoints_t,
     robot_angles_queue: q_Robot_Angles_t,
@@ -16,19 +17,41 @@ def process_bodypoints(
     """
     Spawn threads to process Bodypoints and load them into the RobotAngles queue.
     """
+    robot_bodypoints_by_timestamp: dict[int, ts_Bodypoints_t] = {}
+
+    # TODO: thread max_parallelism at a time, wait if all done until more come in
+    # TODO: are we ever looking to the future for things we might have already calculated? If so, do they ever wait and look at the past? How much complexity right now?
+    timestamp = next(iter(bodypoints_by_timestamp.keys()))
+    
+    find_missing_points(bodypoints_by_timestamp, timestamp)
+    smooth_points(bodypoints_by_timestamp, timestamp)
+    points = bodypoints_by_timestamp[timestamp]
+
+    robot_angles = get_robotangles(points)
+    restrained_angles = restrain_angles(robot_angles)
+    robot_bodypoints = restrain_position(restrained_angles)
+    robot_bodypoints_by_timestamp[timestamp] = robot_bodypoints
+
+    final_bodypoints = restrain_speed(robot_bodypoints_by_timestamp, timestamp)
+    robot_bodypoints_by_timestamp[timestamp] = final_bodypoints
+
+    final_angles = get_robotangles_from_robot_bodypoints(final_bodypoints)
+    heappush(robot_angles_queue, (timestamp, final_angles))
+    
+    del bodypoints_by_timestamp[timestamp]
+
+
+# TODO: these aren't all working in a consistent manner, let's be consistent
+def find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+    """
+    Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
+    """
     pass
 
 
-def find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int) -> Bodypoints_t:
+def smooth_points(bodypoint_queue: Dict[int, Bodypoints_t], timestamp: int):
     """
-    Use points in surrounding frames to populate guesses for any unfound bodypoints.
-    """
-    pass
-
-
-def smooth_points(bodypoint_queue: Dict[int, Bodypoints_t], index: int) -> Bodypoints_t:
-    """
-    Use points in surrounding frames to smoothen points, ignoring differences within a small margin.
+    Use points in surrounding frames to smoothen points at the timestamp, ignoring differences within a small margin.
     """
     pass
 
@@ -36,6 +59,13 @@ def smooth_points(bodypoint_queue: Dict[int, Bodypoints_t], index: int) -> Bodyp
 def get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
     """
     Map the given bodypoints to robot angles.
+    """
+    pass
+
+
+def get_robotangles_from_robot_bodypoints(bodypoints: Bodypoints_t) -> Robot_Angles_t:
+    """
+    Map the given robot bodypoints to robot angles.
     """
     pass
 
@@ -56,8 +86,8 @@ def restrain_position(robot_angles: Robot_Angles_t) -> Bodypoints_t:
     pass
 
 
-def restrain_speed(former_robot_bodypoints: Bodypoints_t, robot_bodypoints: Bodypoints_t) -> Bodypoints_t:
+def restrain_speed(robot_bodypoints_by_timestamp: dict[int, ts_Bodypoints_t], timestamp: int) -> Bodypoints_t:
     """
-    Restrain the given robot bodypoints to disallow moving faster than the threshold.
+    Restrain the robot bodypoints at the given timestamp to disallow moving faster than the threshold.
     """
     pass
