@@ -128,6 +128,7 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
     Returns:
         None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
     """
+
     # If this is the first frame, no smoothing needed
     if timestamp - 1 not in bodypoints_by_timestamp:
         return
@@ -145,6 +146,7 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
             continue
         
         # Unpack the current and previous 3D coordinates
+        # Each point is (x, y, z)
         curr_x, curr_y, curr_z = current_points[i]
         prev_x, prev_y, prev_z = prev_points[i]
         
@@ -156,7 +158,6 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
         
         # If movement is small (jitter), use the previous frame's position
         if movement_distance < JITTER_THRESHOLD:
-            # Keep confidence from current frame, but position from previous
             current_points[i] = (prev_x, prev_y, prev_z)
     
     # Update the dictionary with smoothed points
