@@ -16,34 +16,79 @@
 # This specific template is located at:
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
-stages:          # List of stages for jobs, and their order of execution
+stages:
+  - lint
   - build
   - test
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
+variables:
+  PYTHON_VERSION: "3.8"
+  OPENCV_VERSION: "4.5.5"
+
+# Cache pip dependencies between jobs
+cache:
+  paths:
+    - .pip-cache/
+
+before_script:
+  - python -V
+  - pip install --cache-dir=.pip-cache -U pip
+  - pip --cache-dir=.pip-cache install opencv-python mediapipe numpy pillow
+
+lint:
+  stage: lint
+  image: python:${PYTHON_VERSION}
+  script:
+    - pip --cache-dir=.pip-cache install flake8
+    - flake8 --max-line-length=120 *.py lib/*.py catkin_ws/src/skeleton_tracker/src/*.py
+
+build:
   stage: build
+  image: python:${PYTHON_VERSION}
   script:
-    - echo "Compiling the code..."
-    - echo "Compile complete."
+    - mkdir -p build
+    - cp -r lib build/
+    - cp detect_pose_video.py build/
+    - cp detect_pose_image_matplot.py build/
+  artifacts:
+    paths:
+      - build/
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
+test:python:
+  stage: test
+  image: python:${PYTHON_VERSION}
   script:
-    - echo "Running unit tests... This will take about 60 seconds."
-    - sleep 60
-    - echo "Code coverage is 90%"
+    - cd build
+    - python -c "import mediapipe; import cv2; import numpy; print('Dependencies imported successfully')"
+    - python -c "from lib.mp_util import PoseLandmarker; print('Module imports working')"
+  dependencies:
+    - build
 
-lint-test-job:   # This job also runs in the test stage.
-  stage: test    # It can run at the same time as unit-test-job (in parallel).
+test:ros:
+  stage: test
+  image: ros:noetic
+  before_script:
+    - apt-get update && apt-get install -y python3-pip
+    - pip3 install opencv-python mediapipe numpy
+    - source /opt/ros/noetic/setup.bash
   script:
-    - echo "Linting code... This will take about 10 seconds."
-    - sleep 10
-    - echo "No lint issues found."
+    - cd catkin_ws
+    - catkin_make
+    - source devel/setup.bash
+    - rospack find skeleton_tracker
+  only:
+    changes:
+      - catkin_ws/**/*
 
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
-  environment: production
+deploy:
+  stage: deploy
+  image: python:${PYTHON_VERSION}
   script:
     - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - mkdir -p /deploy
+    - cp -r build/* /deploy/
+  only:
+    - main
+  environment:
+    name: production
