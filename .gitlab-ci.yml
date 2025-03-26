@@ -64,6 +64,15 @@ test:python:
     - python -c "from lib.mp_util import PoseLandmarker; print('Module imports working')"
   dependencies:
     - build
+test:python:
+  stage: test
+  image: python:${PYTHON_VERSION}
+  script:
+    - cd build
+    - python -c "import mediapipe; import cv2; import numpy; print('Dependencies imported successfully')"
+    - python -c "from lib.mp_util import PoseLandmarker; print('Module imports working')"
+  dependencies:
+    - build
 
 test:ros:
   stage: test
