@@ -24,6 +24,7 @@ def process_bodypoints(
     Returns:
         None. Processing results are stored in robot_angles_by_timestamp
     """
+
     processing_thread = threading.Thread(
         target=_process_bodypoints_loop,
         args=(timestamps, bodypoints_by_timestamp, robot_angles_by_timestamp),
@@ -49,6 +50,7 @@ def _process_bodypoints_loop(
     Returns:
         None. Processing results are stored in robot_angles_by_timestamp
     """
+
     robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
 
     while True:
@@ -94,6 +96,7 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     Returns:
         None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
     """
+
     current_points = bodypoints_by_timestamp[timestamp]
     
     has_missing_points = any(point is None for point in current_points)
@@ -174,6 +177,7 @@ def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
     Returns:
         Robot_Angles_t: The calculated robot joint angles that would mimic the human pose
     """
+
     pass
 
 
@@ -187,6 +191,7 @@ def _get_robotangles_from_robot_bodypoints(bodypoints: Bodypoints_t) -> Robot_An
     Returns:
         Robot_Angles_t: The final robot joint angles that satisfy all constraints
     """
+
     pass
 
 
@@ -200,6 +205,7 @@ def _restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
     Returns:
         Robot_Angles_t: The robot joint angles after applying angle constraints
     """
+
     pass
 
 
@@ -219,6 +225,7 @@ def _restrain_position(
     Returns:
         None. Results are stored in robot_bodypoints_by_timestamp
     """
+
     # TODO: calculate robot bodypoints (or whatever type it'll be, we don't need all 33 points), then restrain them, and use them in restrain_speed too
     pass
 
@@ -234,4 +241,5 @@ def _restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], time
     Returns:
         None. The robot bodypoints are updated in-place in robot_bodypoints_by_timestamp
     """
+    
     pass
