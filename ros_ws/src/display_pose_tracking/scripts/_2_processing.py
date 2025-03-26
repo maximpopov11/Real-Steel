@@ -4,6 +4,7 @@ from typing import Dict
 import threading
 
 
+# TODO: explain args and returns for all funcs, document good
 # TODO: plug into framework file, signatures changed
 def process_bodypoints(
     timestamps: PriorityQueue[int],
@@ -35,7 +36,12 @@ def _process_bodypoints_loop(
     while True:
         timestamp = timestamps.get()  # Blocks efficiently until data is available
         
-        _find_missing_points(bodypoints_by_timestamp, timestamp)
+        try:
+            _find_missing_points(bodypoints_by_timestamp, timestamp)
+        except ValueError:
+            # Skip this frame if it's the first frame and has missing points
+            continue
+            
         _smooth_points(bodypoints_by_timestamp, timestamp)
         bodypoints = bodypoints_by_timestamp[timestamp]
 
@@ -50,14 +56,45 @@ def _process_bodypoints_loop(
         robot_angles_by_timestamp[timestamp] = final_angles
 
 
+# TODO: make this smart by taking velocity into account
+# TODO: make this smart by using points in the future too
 def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
+    If this is the first frame and we have missing points, throws an exception so the processing
+    loop can skip this frame and wait for a better first frame.
+
+    We guarantee that after this function is called, all bodypoints in the timestamp will be populated.
+    
+    Args:
+        bodypoints_by_timestamp: Dictionary mapping timestamps to bodypoints
+        timestamp: Current timestamp to process
+        
+    Raises:
+        ValueError: If this is the first frame and we have missing points
     """
-    # TODO: implement
-    pass
+    current_points = bodypoints_by_timestamp[timestamp]
+    
+    has_missing_points = any(point is None for point in current_points)
+    if timestamp - 1 not in bodypoints_by_timestamp:
+        # If this is the first frame (no previous frame exists)
+        if has_missing_points:
+            raise ValueError("First frame has missing points - cannot interpolate without previous data")
+        return  # First frame is complete, nothing to do
+    
+    # If we get here, we have a previous frame (which is guaranteed to be complete)
+    prev_points = bodypoints_by_timestamp[timestamp - 1]
+    
+    # Any missing points are set to what they were in the last frame
+    for i in range(len(current_points)):
+        if current_points[i] is None:
+            current_points[i] = prev_points[i]
+    
+    # Update the dictionary with our interpolated points
+    bodypoints_by_timestamp[timestamp] = current_points
 
 
+# TODO: make this smart by using points in the future too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to smoothen points at the timestamp, ignoring variations within a small margin.
@@ -96,7 +133,7 @@ def _restrain_position(
     Restrain the given bodypoints to disallow contact with the self or with the cord at the back of the head.
     This will use the given robot_angles to calculate the robot's bodypoints and restrain them as necessary.
     """
-    # TODO: calculate robot bodypoints (or type, we don't need all 33 points), then restrain them, and use them in restrain_speed too
+    # TODO: calculate robot bodypoints (or whatever type it'll be, we don't need all 33 points), then restrain them, and use them in restrain_speed too
     pass
 
 
