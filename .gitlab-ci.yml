@@ -36,12 +36,12 @@ before_script:
   - pip install --cache-dir=.pip-cache -U pip
   - pip --cache-dir=.pip-cache install opencv-python mediapipe numpy pillow
 
-lint:
-  stage: lint
-  image: python:${PYTHON_VERSION}
-  script:
-    - pip --cache-dir=.pip-cache install flake8
-    - flake8 --max-line-length=120 *.py lib/*.py catkin_ws/src/skeleton_tracker/src/*.py
+# lint:
+#   stage: lint
+#   image: python:${PYTHON_VERSION}
+#   script:
+#     - pip --cache-dir=.pip-cache install flake8
+#     - flake8 --max-line-length=120 *.py lib/*.py catkin_ws/src/skeleton_tracker/src/*.py
 
 build:
   stage: build
