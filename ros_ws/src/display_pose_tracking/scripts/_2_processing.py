@@ -1,9 +1,9 @@
 from custom_types import Bodypoints_t, Robot_Angles_t
 from queue import PriorityQueue
 from typing import Dict
+import threading
 
 
-# TODO: add placeholders for all funcs to be able to run through this all and output dummy data for what's not done
 # TODO: plug into framework file, signatures changed
 def process_bodypoints(
     timestamps: PriorityQueue[int],
@@ -11,34 +11,51 @@ def process_bodypoints(
     robot_angles_by_timestamp: Dict[int, Robot_Angles_t],
 ):
     """
-    Spawn threads to process Bodypoints and load them into the RobotAngles queue.
+    Spawn a thread to process Bodypoints and load them into the RobotAngles queue.
+    Processing happens in the background through a daemon thread.
+    """
+    processing_thread = threading.Thread(
+        target=_process_bodypoints_loop,
+        args=(timestamps, bodypoints_by_timestamp, robot_angles_by_timestamp),
+        daemon=True  # Make thread daemon so it exits when main program exits
+    )
+    processing_thread.start()
+
+
+def _process_bodypoints_loop(
+    timestamps: PriorityQueue[int],
+    bodypoints_by_timestamp: Dict[int, Bodypoints_t],
+    robot_angles_by_timestamp: Dict[int, Robot_Angles_t],
+):
+    """
+    Main processing loop that runs in a separate thread.
     """
     # TODO: this is a placeholder for whatever robot bodypoints will actually be
     robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
 
-    # TODO: thread max_parallelism at a time, wait if all done until more come in
-    # TODO: are we ever looking to the future for things we might have already calculated? If so, do they ever wait and look at the past? How much complexity right now?
-    timestamp = timestamps.get()
-    
-    find_missing_points(bodypoints_by_timestamp, timestamp)
-    smooth_points(bodypoints_by_timestamp, timestamp)
-    bodypoints = bodypoints_by_timestamp[timestamp]
+    while True:
+        timestamp = timestamps.get()  # Blocks efficiently until data is available
+        
+        find_missing_points(bodypoints_by_timestamp, timestamp)
+        smooth_points(bodypoints_by_timestamp, timestamp)
+        bodypoints = bodypoints_by_timestamp[timestamp]
 
-    robot_angles = get_robotangles(bodypoints)
-    restrained_angles = restrain_angles(robot_angles)
+        robot_angles = get_robotangles(bodypoints)
+        restrained_angles = restrain_angles(robot_angles)
 
-    restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
-    restrain_speed(robot_bodypoints_by_timestamp, timestamp)
-    
-    robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
-    final_angles = get_robotangles_from_robot_bodypoints(robot_bodypoints)
-    robot_angles_by_timestamp[timestamp] = final_angles
+        restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
+        restrain_speed(robot_bodypoints_by_timestamp, timestamp)
+        
+        robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
+        final_angles = get_robotangles_from_robot_bodypoints(robot_bodypoints)
+        robot_angles_by_timestamp[timestamp] = final_angles
 
 
 def find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
     """
+    # TODO: implement
     pass
 
 
@@ -46,6 +63,7 @@ def smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: i
     """
     Use points in surrounding frames to smoothen points at the timestamp, ignoring variations within a small margin.
     """
+    # TODO: implement
     pass
 
 
