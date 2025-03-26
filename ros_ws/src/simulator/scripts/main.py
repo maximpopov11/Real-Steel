@@ -2,8 +2,7 @@ import rospy
 from custom_msg.msg import Angles
 from sim_util import timestamp
 
-import os
-import sys
+import numpy as np
 
 import mujoco
 import mujoco.viewer
@@ -83,6 +82,11 @@ def app():
     with mujoco.viewer.launch_passive(model, data) as viewer:
         # refresh rate for sim
         rate = rospy.Rate(60) # 60 Hz refresh
+
+        viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])
+        viewer.cam.distance = 2.0
+        viewer.cam.elevation = -20
+        viewer.cam.azimuth = 180
 
         while not rospy.is_shutdown() and viewer.is_running():
             # step in sim
