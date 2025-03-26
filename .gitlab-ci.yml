@@ -58,15 +58,11 @@ build:
 test:python:
   stage: test
   image: python:${PYTHON_VERSION}
-  script:
-    - cd build
-    - python -c "import mediapipe; import cv2; import numpy; print('Dependencies imported successfully')"
-    - python -c "from lib.mp_util import PoseLandmarker; print('Module imports working')"
-  dependencies:
-    - build
-test:python:
-  stage: test
-  image: python:${PYTHON_VERSION}
+  before_script:
+    - python -V
+    - pip install --cache-dir=.pip-cache -U pip
+    - apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
+    - pip --cache-dir=.pip-cache install opencv-python mediapipe numpy pillow
   script:
     - cd build
     - python -c "import mediapipe; import cv2; import numpy; print('Dependencies imported successfully')"
@@ -78,7 +74,7 @@ test:ros:
   stage: test
   image: ros:noetic
   before_script:
-    - apt-get update && apt-get install -y python3-pip
+    - apt-get update && apt-get install -y python3-pip libgl1-mesa-glx libglib2.0-0
     - pip3 install opencv-python mediapipe numpy
     - source /opt/ros/noetic/setup.bash
   script:
@@ -93,6 +89,10 @@ test:ros:
 deploy:
   stage: deploy
   image: python:${PYTHON_VERSION}
+  before_script:
+    - python -V
+    - pip install --cache-dir=.pip-cache -U pip
+    - apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
   script:
     - echo "Deploying application..."
     - mkdir -p /deploy
