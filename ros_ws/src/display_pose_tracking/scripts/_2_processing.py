@@ -4,7 +4,6 @@ from typing import Dict
 import threading
 
 
-# TODO: explain args and returns for all funcs, document good
 # TODO: plug into framework file, signatures changed
 def process_bodypoints(
     timestamps: PriorityQueue[int],
@@ -14,6 +13,14 @@ def process_bodypoints(
     """
     Spawn a thread to process Bodypoints and load them into the RobotAngles queue.
     Processing happens in the background through a daemon thread.
+
+    Args:
+        timestamps: Priority queue of timestamps to process, in chronological order where timestamps encompass all natural nums 1, 2, ...
+        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
+        robot_angles_by_timestamp: Dictionary to store the processed robot angles for each timestamp
+
+    Returns:
+        None. Processing results are stored in robot_angles_by_timestamp
     """
     processing_thread = threading.Thread(
         target=_process_bodypoints_loop,
@@ -29,7 +36,16 @@ def _process_bodypoints_loop(
     robot_angles_by_timestamp: Dict[int, Robot_Angles_t],
 ):
     """
-    Main processing loop that runs in a separate thread.
+    Main processing loop that runs in a separate thread. Continuously processes incoming
+    bodypoints and converts them to robot angles.
+
+    Args:
+        timestamps: Priority queue of timestamps to process, in chronological order
+        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
+        robot_angles_by_timestamp: Dictionary to store the processed robot angles for each timestamp
+
+    Returns:
+        None. Processing results are stored in robot_angles_by_timestamp
     """
     robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
 
@@ -67,11 +83,14 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     We guarantee that after this function is called, all bodypoints in the timestamp will be populated.
     
     Args:
-        bodypoints_by_timestamp: Dictionary mapping timestamps to bodypoints
-        timestamp: Current timestamp to process
-        
+        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
+        timestamp: The timestamp of the frame to process
+
     Raises:
-        ValueError: If this is the first frame and we have missing points
+        ValueError: If this is the first frame and it has missing points
+
+    Returns:
+        None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
     """
     current_points = bodypoints_by_timestamp[timestamp]
     
@@ -94,10 +113,16 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     bodypoints_by_timestamp[timestamp] = current_points
 
 
-# TODO: make this smart by using points in the future too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
-    Use points in surrounding frames to smoothen points at the timestamp, ignoring variations within a small margin.
+    Smoothen points at the timestamp by using surrounding frames, reducing noise and jitter.
+
+    Args:
+        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
+        timestamp: The timestamp of the frame to smooth
+
+    Returns:
+        None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
     """
     # TODO: implement
     pass
@@ -105,21 +130,39 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
 
 def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
     """
-    Map the given bodypoints to robot angles.
+    Convert human bodypoints to corresponding robot joint angles.
+
+    Args:
+        bodypoints: Array of 33 body keypoints representing the human pose
+
+    Returns:
+        Robot_Angles_t: The calculated robot joint angles that would mimic the human pose
     """
     pass
 
 
 def _get_robotangles_from_robot_bodypoints(bodypoints: Bodypoints_t) -> Robot_Angles_t:
     """
-    Map the given robot bodypoints to robot angles.
+    Convert robot bodypoints (after constraints are applied) back to robot joint angles.
+
+    Args:
+        bodypoints: Array of robot body keypoints after constraints have been applied
+
+    Returns:
+        Robot_Angles_t: The final robot joint angles that satisfy all constraints
     """
     pass
 
 
 def _restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
     """
-    Restrain the given robot_angles to disallow any infeasible angles.
+    Apply angle constraints to ensure the robot stays within its physical limits.
+
+    Args:
+        robot_angles: The initial robot joint angles
+
+    Returns:
+        Robot_Angles_t: The robot joint angles after applying angle constraints
     """
     pass
 
@@ -130,8 +173,15 @@ def _restrain_position(
     timestamp: int
 ):
     """
-    Restrain the given bodypoints to disallow contact with the self or with the cord at the back of the head.
-    This will use the given robot_angles to calculate the robot's bodypoints and restrain them as necessary.
+    Apply position constraints to prevent self-collision and cord tangling.
+
+    Args:
+        robot_angles: The current robot joint angles
+        robot_bodypoints_by_timestamp: Dictionary storing robot bodypoints for each timestamp
+        timestamp: The current timestamp being processed
+
+    Returns:
+        None. Results are stored in robot_bodypoints_by_timestamp
     """
     # TODO: calculate robot bodypoints (or whatever type it'll be, we don't need all 33 points), then restrain them, and use them in restrain_speed too
     pass
@@ -139,6 +189,13 @@ def _restrain_position(
 
 def _restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
-    Restrain the robot bodypoints at the given timestamp to disallow moving faster than the threshold.
+    Apply speed constraints to ensure the robot's movements stay within velocity limits.
+
+    Args:
+        robot_bodypoints_by_timestamp: Dictionary storing robot bodypoints for each timestamp
+        timestamp: The current timestamp being processed
+
+    Returns:
+        None. The robot bodypoints are updated in-place in robot_bodypoints_by_timestamp
     """
     pass
