@@ -5,6 +5,8 @@ import threading
 
 
 # TODO: plug into framework file, signatures changed
+# TODO: don't assume timestamps will come in order
+# TODO: make processing smarter by using points in the future too
 def process_bodypoints(
     timestamps: PriorityQueue[int],
     bodypoints_by_timestamp: Dict[int, Bodypoints_t],
@@ -73,7 +75,7 @@ def _process_bodypoints_loop(
 
 
 # TODO: make this smart by taking velocity into account
-# TODO: make this smart by using points in the future too
+# TODO: do we get individual point confidence? If yes, and something is low confidence, might interpolating it be better than relying on low confidence mediapipe?
 def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
@@ -113,9 +115,11 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     bodypoints_by_timestamp[timestamp] = current_points
 
 
+# TODO: how do we normally see jitter? If we have individual points jittering harshly while the rest is constant we can ignore those too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Smoothen points at the timestamp by using surrounding frames, reducing noise and jitter.
+    Ignores small variations between consecutive frames to produce smoother motion.
 
     Args:
         bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
@@ -124,8 +128,39 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
     Returns:
         None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
     """
-    # TODO: implement
-    pass
+    # If this is the first frame, no smoothing needed
+    if timestamp - 1 not in bodypoints_by_timestamp:
+        return
+    
+    current_points = bodypoints_by_timestamp[timestamp]
+    prev_points = bodypoints_by_timestamp[timestamp - 1]
+    
+    # Define threshold for jitter (adjust as needed for sensitivity)
+    JITTER_THRESHOLD = 0.01  # Small movement threshold
+    
+    # For each point in the current frame
+    for i in range(len(current_points)):
+        # Skip if either point is None (shouldn't happen after _find_missing_points)
+        if current_points[i] is None or prev_points[i] is None:
+            continue
+        
+        # Unpack the current and previous 3D coordinates
+        curr_x, curr_y, curr_z = current_points[i]
+        prev_x, prev_y, prev_z = prev_points[i]
+        
+        # Calculate 3D Euclidean distance between current and previous point
+        dx = curr_x - prev_x
+        dy = curr_y - prev_y
+        dz = curr_z - prev_z
+        movement_distance = (dx**2 + dy**2 + dz**2)**0.5
+        
+        # If movement is small (jitter), use the previous frame's position
+        if movement_distance < JITTER_THRESHOLD:
+            # Keep confidence from current frame, but position from previous
+            current_points[i] = (prev_x, prev_y, prev_z)
+    
+    # Update the dictionary with smoothed points
+    bodypoints_by_timestamp[timestamp] = current_points
 
 
 def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
