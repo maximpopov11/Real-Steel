@@ -27,17 +27,14 @@ def process_bodypoints(
     robot_angles = get_robotangles(bodypoints)
     restrained_angles = restrain_angles(robot_angles)
 
-    robot_bodypoints = restrain_position(restrained_angles)
-    robot_bodypoints_by_timestamp[timestamp] = robot_bodypoints
-
-    final_bodypoints = restrain_speed(robot_bodypoints_by_timestamp, timestamp)
-    robot_bodypoints_by_timestamp[timestamp] = final_bodypoints
-
-    final_angles = get_robotangles_from_robot_bodypoints(final_bodypoints)
+    restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
+    restrain_speed(robot_bodypoints_by_timestamp, timestamp)
+    
+    robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
+    final_angles = get_robotangles_from_robot_bodypoints(robot_bodypoints)
     robot_angles_by_timestamp[timestamp] = final_angles
 
 
-# TODO: these aren't all working in a consistent manner, let's be consistent
 def find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
@@ -73,7 +70,11 @@ def restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
     pass
 
 
-def restrain_position(robot_angles: Robot_Angles_t) -> Bodypoints_t:
+def restrain_position(
+    robot_angles: Robot_Angles_t, 
+    robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t],
+    timestamp: int
+):
     """
     Restrain the given bodypoints to disallow contact with the self or with the cord at the back of the head.
     This will use the given robot_angles to calculate the robot's bodypoints and restrain them as necessary.
@@ -82,7 +83,7 @@ def restrain_position(robot_angles: Robot_Angles_t) -> Bodypoints_t:
     pass
 
 
-def restrain_speed(robot_bodypoints_by_timestamp: dict[int, Bodypoints_t], timestamp: int) -> Bodypoints_t:
+def restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Restrain the robot bodypoints at the given timestamp to disallow moving faster than the threshold.
     """
