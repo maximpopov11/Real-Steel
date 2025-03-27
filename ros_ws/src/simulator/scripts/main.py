@@ -1,38 +1,4 @@
-import rospy
-from custom_msg.msg import Angles
-from sim_util import timestamp
-
-import numpy as np
-
-import mujoco
-import mujoco.viewer
-
-# path to where git repo is
-home_path = '/home/db-triple/Desktop/git/sd15_reel-steel/' 
-model_path = 'models/unitree_g1/scene.xml'
-model = mujoco.MjModel.from_xml_path(home_path + model_path)
-data = mujoco.MjData(model)
-
-""" Joints we are currently using (just left/right shoulder & elbow) """
-left_arm_joint_names = [
-    "left_shoulder_pitch_joint", 
-    "left_shoulder_roll_joint", 
-    "left_shoulder_yaw_joint", 
-    "left_elbow_joint"
-]
-
-right_arm_joint_names = [
-    "right_shoulder_pitch_joint",
-    "right_shoulder_roll_joint",
-    "right_shoulder_yaw_joint",
-    "right_elbow_joint"
-]
-""""""
-
-""" Storage for joint id's """
-left_actuator_ids = []
-right_actuator_ids = []
-""""""
+from sim_util import *
 
 def setup_ids():
     """
