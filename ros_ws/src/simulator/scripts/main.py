@@ -72,7 +72,7 @@ def use_angles(msg):
     
 def app():
     sub = rospy.Subscriber('robot_angles', Angles, use_angles)
-    rospy.init_node('simulator', anonymous=True)
+    rospy.init_node('simulator', anonymous=False)
 
     # if id's of joints are not found exit simulation
     if setup_ids() == -1:
@@ -83,18 +83,18 @@ def app():
         # refresh rate for sim
         rate = rospy.Rate(60) # 60 Hz refresh
 
-        viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])
-        viewer.cam.distance = 2.0
-        viewer.cam.elevation = -20
-        viewer.cam.azimuth = 180
+        viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])   # camera looking at
+        viewer.cam.distance = 2.0                           # how far is camera from lookat
+        viewer.cam.elevation = -20                          # vertical rotation degrees
+        viewer.cam.azimuth = 180                            # horizontal rotation degrees
 
         while not rospy.is_shutdown() and viewer.is_running():
             # step in sim
             mujoco.mj_step(model, data)
 
             # lock and update viewer
-            with viewer.lock():
-                viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(data.time % 2)
+            # with viewer.lock():
+                # viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(data.time % 2)
 
             # sync viewer to display updated sim
             viewer.sync()
