@@ -56,6 +56,8 @@ def _process_bodypoints_loop(
 
     while True:
         timestamp = timestamps.get()  # Blocks efficiently until data is available
+
+        _drop_bad_points(bodypoints_by_timestamp, timestamp)
         
         try:
             _find_missing_points(bodypoints_by_timestamp, timestamp)
@@ -77,7 +79,22 @@ def _process_bodypoints_loop(
         robot_angles_by_timestamp[timestamp] = final_angles
 
 
-# TODO: do we get individual point confidence? If yes, and something is low confidence, might interpolating it be better than relying on low confidence mediapipe?
+def _drop_bad_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+    """
+    Drop any points at the timstamp who's values are incorrect.
+    """
+    bodypoints = bodypoints_by_timestamp[timestamp]
+    
+    # Filter out any points with z-value = 0 (depth camera failure)
+    for point in bodypoints.items():
+        if point is not None and point[2] == 0:
+            point[2] = None
+    
+    # Update the dictionary with filtered points
+    bodypoints_by_timestamp[timestamp] = bodypoints
+
+
+# TODO: our z-values may have been dropped
 def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
@@ -100,10 +117,19 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
 
     current_points = bodypoints_by_timestamp[timestamp]
     
-    has_missing_points = any(point is None for point in current_points)
+    # Check if any points are missing entirely or have missing coordinates
+    has_missing_data = False
+    for point in current_points:
+        if point is None:
+            has_missing_data = True
+            break
+        if len(point) >= 3 and (point[0] is None or point[1] is None or point[2] is None):
+            has_missing_data = True
+            break
+    
     if timestamp - 1 not in bodypoints_by_timestamp:
         # If this is the first frame (no previous frame exists)
-        if has_missing_points:
+        if has_missing_data:
             raise ValueError("First frame has missing points - cannot interpolate without previous data")
         return  # First frame is complete, nothing to do
     
@@ -126,51 +152,88 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     
     # For each point in the current frame
     for i in range(len(current_points)):
+        # If point is completely missing, we need to predict all coordinates
         if current_points[i] is None:
-            # If we only have one previous frame, use its position
-            if len(available_frames) == 1:
-                current_points[i] = prev_points[i]
-            else:
-                # We have multiple frames, calculate velocity
-                velocities = []
+            current_points[i] = (None, None, None)
+        
+        # Get current coordinates (which may be None)
+        curr_x = current_points[i][0]
+        curr_y = current_points[i][1]
+        curr_z = current_points[i][2]
+        
+        # Determine which coordinates need prediction
+        needs_x = curr_x is None
+        needs_y = curr_y is None
+        needs_z = curr_z is None
+        
+        # If nothing needs prediction, skip this point
+        if not (needs_x or needs_y or needs_z):
+            continue
+        
+        # If we only have one previous frame, use its coordinates for missing values
+        if len(available_frames) == 1:
+            prev_x, prev_y, prev_z = prev_points[i]
+            new_x = prev_x if needs_x else curr_x
+            new_y = prev_y if needs_y else curr_y
+            new_z = prev_z if needs_z else curr_z
+            current_points[i] = (new_x, new_y, new_z)
+        else:
+            # We have multiple frames, calculate velocities for needed coordinates
+            vx_values = []
+            vy_values = []
+            vz_values = []
+            
+            # Calculate velocities between consecutive frames
+            for j in range(len(available_frames) - 1):
+                curr_frame = available_frames[j]
+                prev_frame = available_frames[j + 1]
                 
-                # Calculate velocities between consecutive frames
-                for j in range(len(available_frames) - 1):
-                    curr_frame = available_frames[j]
-                    prev_frame = available_frames[j + 1]
-                    
-                    curr_point = bodypoints_by_timestamp[curr_frame][i]
-                    prev_point = bodypoints_by_timestamp[prev_frame][i]
-                    
-                    # Calculate velocity components for x, y, z
-                    time_diff = curr_frame - prev_frame  # Assuming uniform timesteps
+                curr_point = bodypoints_by_timestamp[curr_frame][i]
+                prev_point = bodypoints_by_timestamp[prev_frame][i]
+                
+                # Calculate velocity components only for needed coordinates
+                time_diff = curr_frame - prev_frame  # Assuming uniform timesteps
+                
+                if needs_x:
                     vx = (curr_point[0] - prev_point[0]) / time_diff
-                    vy = (curr_point[1] - prev_point[1]) / time_diff
-                    vz = (curr_point[2] - prev_point[2]) / time_diff
+                    vx_values.append(vx)
                     
-                    velocities.append((vx, vy, vz))
-                
-                # Average the velocities from different frame pairs
-                avg_vx = sum(v[0] for v in velocities) / len(velocities)
-                avg_vy = sum(v[1] for v in velocities) / len(velocities)
-                avg_vz = sum(v[2] for v in velocities) / len(velocities)
-                
-                # Extrapolate from the most recent position using calculated velocity
-                most_recent_point = prev_points[i]
-                time_since_last = timestamp - available_frames[0]
-                
+                if needs_y:
+                    vy = (curr_point[1] - prev_point[1]) / time_diff
+                    vy_values.append(vy)
+                    
+                if needs_z:
+                    vz = (curr_point[2] - prev_point[2]) / time_diff
+                    vz_values.append(vz)
+            
+            # Get most recent point and time since last frame
+            most_recent_point = prev_points[i]
+            time_since_last = timestamp - available_frames[0]
+            
+            # Calculate new coordinates only for those that need prediction
+            new_x = curr_x
+            new_y = curr_y
+            new_z = curr_z
+            
+            if needs_x:
+                avg_vx = sum(vx_values) / len(vx_values)
                 new_x = most_recent_point[0] + avg_vx * time_since_last
-                new_y = most_recent_point[1] + avg_vy * time_since_last
-                new_z = most_recent_point[2] + avg_vz * time_since_last
                 
-                # Update the current point with extrapolated position
-                current_points[i] = (new_x, new_y, new_z)
+            if needs_y:
+                avg_vy = sum(vy_values) / len(vy_values)
+                new_y = most_recent_point[1] + avg_vy * time_since_last
+                
+            if needs_z:
+                avg_vz = sum(vz_values) / len(vz_values)
+                new_z = most_recent_point[2] + avg_vz * time_since_last
+            
+            # Update only the coordinates that needed prediction
+            current_points[i] = (new_x, new_y, new_z)
     
     # Update the dictionary with our interpolated points
     bodypoints_by_timestamp[timestamp] = current_points
 
 
-# TODO: ignore depth 0
 # TODO: how do we normally see jitter? If we have individual points jittering harshly while the rest is constant we can ignore those too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
