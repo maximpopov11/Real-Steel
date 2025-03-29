@@ -4,7 +4,8 @@ from typing import Dict
 import threading
 
 
-# TODO: plug into framework file, signatures changed
+# TODO: plug into ROS: look at how kinematics does it, custom_msg package has our bodypoints (I am the framework then nice!)
+# TODO: don't assume timestamps are 1, 2, 3, ...
 # TODO: don't assume timestamps will come in order
 # TODO: make processing smarter by using points in the future too
 def process_bodypoints(
@@ -76,7 +77,6 @@ def _process_bodypoints_loop(
         robot_angles_by_timestamp[timestamp] = final_angles
 
 
-# TODO: make this smart by taking velocity into account
 # TODO: do we get individual point confidence? If yes, and something is low confidence, might interpolating it be better than relying on low confidence mediapipe?
 def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
@@ -84,6 +84,7 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     If this is the first frame and we have missing points, throws an exception so the processing
     loop can skip this frame and wait for a better first frame.
 
+    Uses velocity-based extrapolation from previous frames to predict the position of missing points.
     We guarantee that after this function is called, all bodypoints in the timestamp will be populated.
     
     Args:
@@ -106,18 +107,70 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             raise ValueError("First frame has missing points - cannot interpolate without previous data")
         return  # First frame is complete, nothing to do
     
-    # If we get here, we have a previous frame (which is guaranteed to be complete)
-    prev_points = bodypoints_by_timestamp[timestamp - 1]
+    # Look for the previous frames to calculate velocity
+    # We will average multiple frames to smooth values
+    NUM_HISTORY_FRAMES = 5  # Number of previous frames to use for velocity calculation
+    available_frames = []
     
-    # Any missing points are set to what they were in the last frame
+    # Find available previous frames, already in order from most recent to oldest
+    for i in range(1, NUM_HISTORY_FRAMES + 1):
+        if timestamp - i in bodypoints_by_timestamp:
+            available_frames.append(timestamp - i)
+    
+    # Need at least one previous frame
+    if not available_frames:
+        raise ValueError("No previous frames available for interpolation")
+    
+    # Get the most recent frame's points
+    prev_points = bodypoints_by_timestamp[available_frames[0]]
+    
+    # For each point in the current frame
     for i in range(len(current_points)):
         if current_points[i] is None:
-            current_points[i] = prev_points[i]
+            # If we only have one previous frame, use its position
+            if len(available_frames) == 1:
+                current_points[i] = prev_points[i]
+            else:
+                # We have multiple frames, calculate velocity
+                velocities = []
+                
+                # Calculate velocities between consecutive frames
+                for j in range(len(available_frames) - 1):
+                    curr_frame = available_frames[j]
+                    prev_frame = available_frames[j + 1]
+                    
+                    curr_point = bodypoints_by_timestamp[curr_frame][i]
+                    prev_point = bodypoints_by_timestamp[prev_frame][i]
+                    
+                    # Calculate velocity components for x, y, z
+                    time_diff = curr_frame - prev_frame  # Assuming uniform timesteps
+                    vx = (curr_point[0] - prev_point[0]) / time_diff
+                    vy = (curr_point[1] - prev_point[1]) / time_diff
+                    vz = (curr_point[2] - prev_point[2]) / time_diff
+                    
+                    velocities.append((vx, vy, vz))
+                
+                # Average the velocities from different frame pairs
+                avg_vx = sum(v[0] for v in velocities) / len(velocities)
+                avg_vy = sum(v[1] for v in velocities) / len(velocities)
+                avg_vz = sum(v[2] for v in velocities) / len(velocities)
+                
+                # Extrapolate from the most recent position using calculated velocity
+                most_recent_point = prev_points[i]
+                time_since_last = timestamp - available_frames[0]
+                
+                new_x = most_recent_point[0] + avg_vx * time_since_last
+                new_y = most_recent_point[1] + avg_vy * time_since_last
+                new_z = most_recent_point[2] + avg_vz * time_since_last
+                
+                # Update the current point with extrapolated position
+                current_points[i] = (new_x, new_y, new_z)
     
     # Update the dictionary with our interpolated points
     bodypoints_by_timestamp[timestamp] = current_points
 
 
+# TODO: ignore depth 0
 # TODO: how do we normally see jitter? If we have individual points jittering harshly while the rest is constant we can ignore those too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
@@ -241,5 +294,5 @@ def _restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], time
     Returns:
         None. The robot bodypoints are updated in-place in robot_bodypoints_by_timestamp
     """
-    
+
     pass
