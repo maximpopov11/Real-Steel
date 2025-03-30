@@ -3,7 +3,7 @@ from typing import Any, List, Tuple
 
 Bodypoints_t = List[float]
 """
-A list of 33 bodypoints obtained from Mediapipe.
+A list of 15 bodypoints obtained from Mediapipe (we only take some of them).
 """
 
 Robot_Angles_t = List[float]

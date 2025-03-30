@@ -1,84 +1,84 @@
+from custom_msg.msg import Landmarks, Angles
 from custom_types import Bodypoints_t, Robot_Angles_t
-from queue import PriorityQueue
-from typing import Dict
-import threading
+from typing import Dict, List
+import rospy
 
 
-# TODO: plug into ROS: look at how kinematics does it, custom_msg package has our bodypoints (I am the framework then nice!)
-# TODO: don't assume timestamps are 1, 2, 3, ...
-# TODO: don't assume timestamps will come in order
-# TODO: make processing smarter by using points in the future too
-def process_bodypoints(
-    timestamps: PriorityQueue[int],
-    bodypoints_by_timestamp: Dict[int, Bodypoints_t],
-    robot_angles_by_timestamp: Dict[int, Robot_Angles_t],
-):
+# TODO: assume timestamps will come in order
+# TODO: assume timestamps are float time values
+# TODO: should this file live elsewhere now?
+
+
+pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
+
+timestamps: List[int] = []
+bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
+robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
+
+
+def process_bodypoints(msg):
     """
-    Spawn a thread to process Bodypoints and load them into the RobotAngles queue.
-    Processing happens in the background through a daemon thread.
+    Subscripe to a ROS topic to receive bodypoints.
 
     Args:
-        timestamps: Priority queue of timestamps to process, in chronological order where timestamps encompass all natural nums 1, 2, ...
-        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
-        robot_angles_by_timestamp: Dictionary to store the processed robot angles for each timestamp
+        msg: ROS message in the form of msg.Landmarks
 
     Returns:
-        None. Processing results are stored in robot_angles_by_timestamp
+        None. Angle results are published to ROS.
     """
 
-    processing_thread = threading.Thread(
-        target=_process_bodypoints_loop,
-        args=(timestamps, bodypoints_by_timestamp, robot_angles_by_timestamp),
-        daemon=True  # Make thread daemon so it exits when main program exits
-    )
-    processing_thread.start()
+    # Parse msg
+    landmarks = msg.Landmarks
+    timestamp = landmarks.timestamp
+    bodypoints = [
+        landmarks.nose,
+        landmarks.left_hip,
+        landmarks.left_shoulder,
+        landmarks.left_elbow,
+        landmarks.left_wrist,
+        landmarks.left_pinky,
+        landmarks.left_index,
+        landmarks.left_thumb,
+        landmarks.right_hip,
+        landmarks.right_shoulder,
+        landmarks.right_elbow,
+        landmarks.right_wrist,
+        landmarks.right_pinky,
+        landmarks.right_index,
+        landmarks.right_thumb,
+    ]
+    
+    timestamps.append(timestamp)
+    bodypoints_by_timestamp[timestamp] = bodypoints
 
-
-def _process_bodypoints_loop(
-    timestamps: PriorityQueue[int],
-    bodypoints_by_timestamp: Dict[int, Bodypoints_t],
-    robot_angles_by_timestamp: Dict[int, Robot_Angles_t],
-):
-    """
-    Main processing loop that runs in a separate thread. Continuously processes incoming
-    bodypoints and converts them to robot angles.
-
-    Args:
-        timestamps: Priority queue of timestamps to process, in chronological order
-        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
-        robot_angles_by_timestamp: Dictionary to store the processed robot angles for each timestamp
-
-    Returns:
-        None. Processing results are stored in robot_angles_by_timestamp
-    """
-
-    robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
-
-    while True:
-        timestamp = timestamps.get()  # Blocks efficiently until data is available
-
-        _drop_bad_points(bodypoints_by_timestamp, timestamp)
+    _drop_bad_points(bodypoints_by_timestamp, timestamp)
+    
+    try:
+        _find_missing_points(bodypoints_by_timestamp, timestamp)
+    except ValueError:
+        # Skip this frame if it's the first frame and has missing points
+        return
         
-        try:
-            _find_missing_points(bodypoints_by_timestamp, timestamp)
-        except ValueError:
-            # Skip this frame if it's the first frame and has missing points
-            continue
-            
-        _smooth_points(bodypoints_by_timestamp, timestamp)
-        bodypoints = bodypoints_by_timestamp[timestamp]
+    _smooth_points(bodypoints_by_timestamp, timestamp)
+    bodypoints = bodypoints_by_timestamp[timestamp]
 
-        robot_angles = _get_robotangles(bodypoints)
-        restrained_angles = _restrain_angles(robot_angles)
+    robot_angles = _get_robotangles(bodypoints)
+    restrained_angles = _restrain_angles(robot_angles)
 
-        _restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
-        _restrain_speed(robot_bodypoints_by_timestamp, timestamp)
-        
-        robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
-        final_angles = _get_robotangles_from_robot_bodypoints(robot_bodypoints)
-        robot_angles_by_timestamp[timestamp] = final_angles
+    _restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
+    _restrain_speed(robot_bodypoints_by_timestamp, timestamp)
+    
+    robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
+    final_angles = _get_robotangles_from_robot_bodypoints(robot_bodypoints)
+
+    # publish robot angles
+    angles_msg = Angles()
+    angles_msg.left_arm = final_angles[0]
+    angles_msg.right_arm = final_angles[1]
+    pub.publish(angles_msg)
 
 
+# TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
 def _drop_bad_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Drop any points at the timstamp who's values are incorrect.
@@ -94,7 +94,7 @@ def _drop_bad_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp
     bodypoints_by_timestamp[timestamp] = bodypoints
 
 
-# TODO: our z-values may have been dropped
+# TODO: if interpolation is bad, make it smarter by using points from the future too (where they are present)
 def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
@@ -234,7 +234,6 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     bodypoints_by_timestamp[timestamp] = current_points
 
 
-# TODO: how do we normally see jitter? If we have individual points jittering harshly while the rest is constant we can ignore those too
 def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
     """
     Smoothen points at the timestamp by using surrounding frames, reducing noise and jitter.
@@ -359,3 +358,16 @@ def _restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], time
     """
 
     pass
+
+
+def app():
+    rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
+    rospy.init_node('kinematics', anonymous=True)
+    rospy.spin()
+
+
+if __name__ == '__main__':
+    try:
+        app()
+    except rospy.ROSInterruptException:
+        pass
