@@ -1,11 +1,12 @@
 from custom_msg.msg import Landmarks, Angles
 from custom_types import Bodypoints_t, Robot_Angles_t
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import rospy
 
 
+# TODO: do we really need to import custom_types?
 # TODO: should this file live elsewhere now?
 
 
@@ -72,20 +73,20 @@ def process_bodypoints(msg):
         
     _smooth_points(current_index)
     
-    # TODO: these two should instead also just take in the index
     # Calculate robot angles based on the (now processed) bodypoints
-    current_frame.robot_angles = _get_robotangles(current_frame.bodypoints)
-    current_frame.robot_angles = _restrain_angles(current_frame.robot_angles)
+    _get_robotangles(current_index)
+    _restrain_angles(current_index)
 
     _restrain_position(current_index)
     _restrain_speed(current_index)
     
-    final_angles = _get_robotangles_from_robot_bodypoints(current_frame.robot_bodypoints)
+    _get_robotangles_from_robot_bodypoints(current_index)
 
     # publish robot angles
     angles_msg = Angles()
-    angles_msg.left_arm = final_angles[0]
-    angles_msg.right_arm = final_angles[1]
+    current_frame = frames[current_index]
+    angles_msg.left_arm = current_frame.robot_angles[0]
+    angles_msg.right_arm = current_frame.robot_angles[1]
     pub.publish(angles_msg)
 
 
@@ -304,43 +305,30 @@ def _smooth_points(frame_index: int):
     current_frame.bodypoints = current_points
 
 
-def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
+def _get_robotangles(frame_index: int):
     """
     Convert human bodypoints to corresponding robot joint angles.
 
     Args:
-        bodypoints: Array of body keypoints representing the human pose
+        frame_index: Index of the frame in the frames list
 
     Returns:
-        Robot_Angles_t: The calculated robot joint angles that would mimic the human pose
+        None. The robot angles are updated in-place in the frame
     """
 
     pass
 
 
-def _get_robotangles_from_robot_bodypoints(bodypoints: Bodypoints_t) -> Robot_Angles_t:
-    """
-    Convert robot bodypoints (after constraints are applied) back to robot joint angles.
 
-    Args:
-        bodypoints: Array of robot body keypoints after constraints have been applied
-
-    Returns:
-        Robot_Angles_t: The final robot joint angles that satisfy all constraints
-    """
-
-    pass
-
-
-def _restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
+def _restrain_angles(frame_index: int):
     """
     Apply angle constraints to ensure the robot stays within its physical limits.
 
     Args:
-        robot_angles: The initial robot joint angles
+        frame_index: Index of the frame in the frames list
 
     Returns:
-        Robot_Angles_t: The robot joint angles after applying angle constraints
+        None. The robot angles are updated in-place in the frame
     """
 
     pass
@@ -369,6 +357,20 @@ def _restrain_speed(frame_index: int):
 
     Returns:
         None. The robot bodypoints are updated in-place in the frame
+    """
+
+    pass
+
+
+def _get_robotangles_from_robot_bodypoints(frame_index: int):
+    """
+    Convert robot bodypoints (after constraints are applied) back to robot joint angles.
+
+    Args:
+        frame_index: Index of the frame in the frames list
+
+    Returns:
+        None. The robot angles are updated in-place in the frame
     """
 
     pass
