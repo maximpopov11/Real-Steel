@@ -1,6 +1,6 @@
 <robot name="g1_29dof_rev_1_0">
     <mujoco>
-        <compiler meshdir="$(find g1_moveit_config)/meshes" discardvisual="false" />
+        <compiler meshdir="package://g1_moveit_config/meshes" discardvisual="false" />
     </mujoco>
     <!-- [CAUTION] uncomment when convert to mujoco -->
     <!-- <link name="world"></link>
@@ -17,7 +17,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/pelvis.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/pelvis.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -33,7 +33,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/pelvis_contour_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/pelvis_contour_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -42,7 +42,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/pelvis_contour_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/pelvis_contour_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -60,7 +60,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_pitch_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -69,7 +69,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -89,7 +89,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -98,7 +98,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -118,7 +118,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -127,7 +127,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_hip_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_hip_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -147,7 +147,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_knee_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_knee_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -156,7 +156,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_knee_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_knee_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -176,7 +176,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_ankle_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_ankle_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -185,7 +185,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_ankle_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_ankle_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -205,7 +205,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_ankle_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_ankle_roll_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -252,7 +252,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_pitch_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -261,7 +261,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -281,7 +281,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -290,7 +290,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -310,7 +310,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -319,7 +319,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_hip_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_hip_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -339,7 +339,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_knee_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_knee_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -348,7 +348,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_knee_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_knee_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -368,7 +368,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_ankle_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_ankle_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -377,7 +377,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_ankle_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_ankle_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -397,7 +397,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_ankle_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_ankle_roll_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -445,7 +445,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/waist_yaw_link_rev_1_0.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/waist_yaw_link_rev_1_0.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -468,7 +468,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/waist_roll_link_rev_1_0.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/waist_roll_link_rev_1_0.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -491,7 +491,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/torso_link_rev_1_0.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/torso_link_rev_1_0.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -500,7 +500,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/torso_link_rev_1_0.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/torso_link_rev_1_0.STL" />
             </geometry>
         </collision>
     </link>
@@ -526,7 +526,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/logo_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/logo_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -535,7 +535,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/logo_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/logo_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -549,7 +549,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/head_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/head_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -558,7 +558,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/head_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/head_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -604,7 +604,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_shoulder_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -633,7 +633,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_shoulder_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -662,7 +662,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -671,7 +671,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -691,7 +691,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_elbow_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -700,7 +700,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_elbow_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -727,7 +727,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -736,7 +736,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -756,7 +756,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -765,7 +765,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -785,7 +785,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -794,7 +794,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -812,7 +812,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/left_rubber_hand.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_rubber_hand.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -828,7 +828,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_shoulder_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -857,7 +857,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_shoulder_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -886,7 +886,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -895,7 +895,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -915,7 +915,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_elbow_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -924,7 +924,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_elbow_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -951,7 +951,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -960,7 +960,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -980,7 +980,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -989,7 +989,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -1009,7 +1009,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -1018,7 +1018,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -1036,7 +1036,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="$(find g1_moveit_config)/meshes/right_rubber_hand.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_rubber_hand.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
