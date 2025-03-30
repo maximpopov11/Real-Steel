@@ -2,12 +2,13 @@ from custom_msg.msg import Landmarks
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 import rospy
+from time import time
 
 @dataclass
 class Frame:
     """Class to store all data related to a single frame."""
     timestamp: float
-    bodypoints: Optional[List[Tuple[float, float, float]]] = None
+    bodypoints: Optional[List[List[float]]] = None
     robot_angles: Optional[List[float]] = None
     robot_bodypoints: Optional[List[Tuple[float, float, float]]] = None
 
@@ -28,26 +29,26 @@ def process_bodypoints(msg):
     Returns:
         None. Angle results are published to ROS.
     """
-
+    begin_ts = int(time() * 1000)
     # Parse msg
-    landmarks = msg.Landmarks
+    landmarks = msg
     timestamp = landmarks.timestamp
     bodypoints = [
-        landmarks.nose,
-        landmarks.left_hip,
-        landmarks.left_shoulder,
-        landmarks.left_elbow,
-        landmarks.left_wrist,
-        landmarks.left_pinky,
-        landmarks.left_index,
-        landmarks.left_thumb,
-        landmarks.right_hip,
-        landmarks.right_shoulder,
-        landmarks.right_elbow,
-        landmarks.right_wrist,
-        landmarks.right_pinky,
-        landmarks.right_index,
-        landmarks.right_thumb,
+        [x for x in landmarks.nose],
+        [x for x in landmarks.left_hip],
+        [x for x in landmarks.left_shoulder],
+        [x for x in landmarks.left_elbow],
+        [x for x in landmarks.left_wrist],
+        [x for x in landmarks.left_pinky],
+        [x for x in landmarks.left_index],
+        [x for x in landmarks.left_thumb],
+        [x for x in landmarks.right_hip],
+        [x for x in landmarks.right_shoulder],
+        [x for x in landmarks.right_elbow],
+        [x for x in landmarks.right_wrist],
+        [x for x in landmarks.right_pinky],
+        [x for x in landmarks.right_index],
+        [x for x in landmarks.right_thumb],
     ]
     
     # Create a new frame and add it to our frames list
@@ -56,6 +57,7 @@ def process_bodypoints(msg):
     current_index = len(frames) - 1
     
     _drop_bad_points(current_index)
+    dropped_bad_points_ts = int(time() * 1000)
     
     try:
         _find_missing_points(current_index)
@@ -63,8 +65,10 @@ def process_bodypoints(msg):
         # Skip this frame if it's the first frame and has missing points
         frames.pop()  # Remove the frame we just added
         return
-        
+    found_missing_points_ts = int(time() * 1000)
+    
     _smooth_points(current_index)
+    smoothed_points_ts = int(time() * 1000)
     
     # Calculate robot angles based on the (now processed) bodypoints
     #_get_robotangles(current_index)
@@ -93,6 +97,8 @@ def process_bodypoints(msg):
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
     pub.publish(preprocessed_msg)
+    published_ts = int(time() * 1000)
+    rospy.loginfo(f"Published preprocessed points in {published_ts - begin_ts}ms")
     
     # publish robot angles
     #angles_msg = Angles()
@@ -174,7 +180,7 @@ def _find_missing_points(frame_index: int):
     # It is guaranteed that there will be at least one
     for i in range(1, min(NUM_HISTORY_FRAMES + 1, frame_index + 1)):
         available_indices.append(frame_index - i)
-
+    #rospy.loginfo("Available indices for extrapolating: " + str(available_indices))
 
     # Get the most recent frame's points
     prev_frame = frames[available_indices[0]]
@@ -184,12 +190,14 @@ def _find_missing_points(frame_index: int):
     for i in range(len(current_points)):
         # If point is completely missing, we need to predict all coordinates
         if current_points[i] is None:
+            #rospy.loginfo("point " + str(i) + " is totally missing")
             current_points[i] = (None, None, None)
         
         # Get current coordinates (which may be None)
         curr_x = current_points[i][0]
         curr_y = current_points[i][1]
         curr_z = current_points[i][2]
+        #rospy.loginfo(f"curr_xyz: ({curr_x}, {curr_y}, {curr_z})")
         
         # Determine which coordinates need prediction
         needs_x = curr_x is None
@@ -198,6 +206,7 @@ def _find_missing_points(frame_index: int):
         
         # If nothing needs prediction, skip this point
         if not (needs_x or needs_y or needs_z):
+            #rospy.loginfo("No prediction on this point!")
             continue
         
         # If we only have one previous frame, use its coordinates for missing values
@@ -208,6 +217,7 @@ def _find_missing_points(frame_index: int):
             new_z = prev_z if needs_z else curr_z
             current_points[i] = (new_x, new_y, new_z)
         else:
+            #rospy.loginfo("Multiple frames, calculate velocities... ")
             # We have multiple frames, calculate velocities for needed coordinates
             vx_values = []
             vy_values = []
@@ -215,6 +225,7 @@ def _find_missing_points(frame_index: int):
             
             # Calculate velocities between consecutive frames
             for j in range(len(available_indices) - 1):
+                #rospy.loginfo(f"iterating for vel: {j}; curr_idx={available_indices[j]}; prev_idx={available_indices[j+1]}")
                 curr_idx = available_indices[j]
                 prev_idx = available_indices[j + 1]
                 
@@ -223,7 +234,7 @@ def _find_missing_points(frame_index: int):
                 
                 curr_point = curr_frame_pts[i]
                 prev_point = prev_frame_pts[i]
-                
+                #rospy.loginfo(f"time diff: {frames[curr_idx].timestamp} - {frames[prev_idx].timestamp}")
                 # Calculate time difference
                 time_diff = frames[curr_idx].timestamp - frames[prev_idx].timestamp
                 
@@ -296,13 +307,14 @@ def _smooth_points(frame_index: int):
     for i in range(len(current_points)):
         # Skip if either point is None (shouldn't happen after _find_missing_points)
         if current_points[i] is None or prev_points[i] is None:
+            #rospy.logerr(f"current_points[i] or prev_points[i] is None! {i}")
             continue
         
         # Unpack the current and previous 3D coordinates
         # Each point is (x, y, z)
         curr_x, curr_y, curr_z = current_points[i]
         prev_x, prev_y, prev_z = prev_points[i]
-        
+        #rospy.loginfo(f"curr_xyz: ({curr_x}, {curr_y}, {curr_z}), {prev_points}")
         # Calculate 3D Euclidean distance between current and previous point
         dx = curr_x - prev_x
         dy = curr_y - prev_y

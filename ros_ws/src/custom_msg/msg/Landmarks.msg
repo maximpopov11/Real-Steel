@@ -1,6 +1,6 @@
 Header header
 
-float32 timestamp
+uint64 timestamp
 float32[3] nose
 float32[3] left_hip
 float32[3] left_shoulder

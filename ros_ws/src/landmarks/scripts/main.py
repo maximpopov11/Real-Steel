@@ -84,6 +84,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     msg.left_thumb      = landmarks_with_depth[12]
     msg.right_thumb     = landmarks_with_depth[13]
     msg.nose            = landmarks_with_depth[14]
+    msg.timestamp       = timestamp_ms
 
     # rospy.loginfo(msg) # will continue to log in CLI msg being sent
     pub.publish(msg)
