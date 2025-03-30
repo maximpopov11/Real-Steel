@@ -5,9 +5,6 @@ from typing import List, Optional, Tuple
 import rospy
 
 
-# TODO: should this file live elsewhere now?
-
-
 @dataclass
 class Frame:
     """Class to store all data related to a single frame."""
