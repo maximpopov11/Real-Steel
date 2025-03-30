@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: ""
+    relative_path: /home/isaaclo/senior_proj/ik/unitree_ros/src/robots/g1_description/g1_dual_arm.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/g1_dual_arm.srdf
+  CONFIG:
+    author_name: Isaac Lo
+    author_email: isaaclo@iastate.edu
+    generated_timestamp: 1742781147

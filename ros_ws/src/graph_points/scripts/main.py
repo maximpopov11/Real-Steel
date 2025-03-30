@@ -83,8 +83,6 @@ def app():
     rospy.init_node('POSE_Display', anonymous=True)
 
     while not rospy.is_shutdown():
-    # while True:
-        #print("xcoords", x_coords)
         # Ensure the bounds of the graph are drawn correctly
         ax.set_xlim([0, 640])
         ax.set_ylim([0, 480])
@@ -104,9 +102,7 @@ def app():
 
         ax.clear()  # Clear previous points
         ax.scatter(x_coords, y_coords, z_coords, color=['red', 'blue', 'red', 'blue', 'red', 'blue', 'red', 'blue', 'black', 'black', 'black', 'black', 'green', 'green', 'purple'])
-        print(f"Left Wrist: ({x_coords[2]}, {y_coords[2]}, {z_coords[2]})")   
-
-    print("exited loop")
+        rospy.loginfo(f"Left Wrist: ({x_coords[6]}, {y_coords[6]}, {z_coords[6]})")   
     
 if __name__ == '__main__':
     try:
