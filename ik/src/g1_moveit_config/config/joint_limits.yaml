@@ -28,9 +28,19 @@ joint_limits:
     max_velocity: 37
     has_acceleration_limits: false
     max_acceleration: 0
+  left_wrist_pitch_joint:
+    has_velocity_limits: true
+    max_velocity: 22
+    has_acceleration_limits: false
+    max_acceleration: 0
   left_wrist_roll_joint:
     has_velocity_limits: true
     max_velocity: 37
+    has_acceleration_limits: false
+    max_acceleration: 0
+  left_wrist_yaw_joint:
+    has_velocity_limits: true
+    max_velocity: 22
     has_acceleration_limits: false
     max_acceleration: 0
   right_elbow_joint:
@@ -53,8 +63,18 @@ joint_limits:
     max_velocity: 37
     has_acceleration_limits: false
     max_acceleration: 0
+  right_wrist_pitch_joint:
+    has_velocity_limits: true
+    max_velocity: 22
+    has_acceleration_limits: false
+    max_acceleration: 0
   right_wrist_roll_joint:
     has_velocity_limits: true
     max_velocity: 37
+    has_acceleration_limits: false
+    max_acceleration: 0
+  right_wrist_yaw_joint:
+    has_velocity_limits: true
+    max_velocity: 22
     has_acceleration_limits: false
     max_acceleration: 0

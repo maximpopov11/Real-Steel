@@ -5,7 +5,7 @@
   <arg name="paused" default="false" doc="Start Gazebo paused"/>
   <arg name="world_name" default="worlds/empty.world" doc="Gazebo world file"/>
   <arg name="world_pose" default="-x 0 -y 0 -z 0 -R 0 -P 0 -Y 0" doc="Pose to spawn the robot at"/>
-  <arg name="initial_joint_positions" default="" doc="Initial joint configuration of the robot"/>
+  <arg name="initial_joint_positions" default=" -J left_elbow_joint -0.75 -J left_shoulder_pitch_joint -1 -J left_shoulder_roll_joint 0 -J left_shoulder_yaw_joint 0 -J left_wrist_pitch_joint 0 -J left_wrist_roll_joint 0 -J left_wrist_yaw_joint 0 -J right_elbow_joint -0.75 -J right_shoulder_pitch_joint -1 -J right_shoulder_roll_joint 0 -J right_shoulder_yaw_joint 0 -J right_wrist_pitch_joint 0 -J right_wrist_roll_joint 0 -J right_wrist_yaw_joint 0" doc="Initial joint configuration of the robot"/>
 
   <!-- Start Gazebo paused to allow the controllers to pickup the initial pose -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch" pass_all_args="true">
@@ -13,7 +13,7 @@
   </include>
 
   <!-- Set the robot urdf on the parameter server -->
-  <param name="robot_description" textfile="$(find g1_moveit_config)/config/gazebo_g1_dual_arm.urdf" />
+  <param name="robot_description" textfile="/home/isaaclo/senior_proj/ik/unitree_ros/src/robots/g1_description/g1_29dof_rev_1_0.urdf" />
 
   <!-- Unpause the simulation after loading the robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />

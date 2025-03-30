@@ -77,7 +77,7 @@
 
   <!-- Sensors Functionality -->
   <include ns="move_group" file="$(dirname)/sensor_manager.launch.xml" if="$(arg allow_trajectory_execution)">
-    <arg name="moveit_sensor_manager" value="g1_dual_arm" />
+    <arg name="moveit_sensor_manager" value="g1_29dof_rev_1_0" />
   </include>
 
   <!-- Start the actual move_group node/action server -->

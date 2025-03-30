@@ -9,6 +9,8 @@ controller_list:
       - right_shoulder_yaw_joint
       - right_elbow_joint
       - right_wrist_roll_joint
+      - right_wrist_pitch_joint
+      - right_wrist_yaw_joint
   - name: left_arm_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
@@ -19,3 +21,5 @@ controller_list:
       - left_shoulder_yaw_joint
       - left_elbow_joint
       - left_wrist_roll_joint
+      - left_wrist_pitch_joint
+      - left_wrist_yaw_joint
