@@ -13,7 +13,7 @@
   </include>
 
   <!-- Set the robot urdf on the parameter server -->
-  <param name="robot_description" textfile="/home/isaaclo/senior_proj/ik/unitree_ros/src/robots/g1_description/g1_29dof_rev_1_0.urdf" />
+  <param name="robot_description" textfile="$(find g1_moveit_config)/g1_29dof_rev_1_0.urdf" />
 
   <!-- Unpause the simulation after loading the robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
