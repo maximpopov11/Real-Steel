@@ -1,24 +1,32 @@
 from custom_msg.msg import Landmarks, Angles
 from custom_types import Bodypoints_t, Robot_Angles_t
-from typing import Dict, List
+from dataclasses import dataclass
+from typing import Dict, List, Optional
+
 import rospy
 
 
-# TODO: assume timestamps will come in order
-# TODO: assume timestamps are float time values
 # TODO: should this file live elsewhere now?
 
 
-pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
+@dataclass
+class Frame:
+    """Class to store all data related to a single frame."""
+    timestamp: float
+    bodypoints: Optional[Bodypoints_t] = None
+    robot_angles: Optional[Robot_Angles_t] = None
+    robot_bodypoints: Optional[Bodypoints_t] = None
 
-timestamps: List[int] = []
-bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
-robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t] = {}
+# List of frames ordered by timestamp
+frames: List[Frame] = []
+
+pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
 
 
 def process_bodypoints(msg):
     """
-    Subscripe to a ROS topic to receive bodypoints.
+    Subscribe to a ROS topic to receive bodypoints.
+    Frame data should come in by strictly increasing timestamp.
 
     Args:
         msg: ROS message in the form of msg.Landmarks
@@ -48,28 +56,31 @@ def process_bodypoints(msg):
         landmarks.right_thumb,
     ]
     
-    timestamps.append(timestamp)
-    bodypoints_by_timestamp[timestamp] = bodypoints
-
-    _drop_bad_points(bodypoints_by_timestamp, timestamp)
+    # Create a new frame and add it to our frames list
+    current_frame = Frame(timestamp=timestamp, bodypoints=bodypoints)
+    frames.append(current_frame)
+    current_index = len(frames) - 1
+    
+    _drop_bad_points(current_index)
     
     try:
-        _find_missing_points(bodypoints_by_timestamp, timestamp)
+        _find_missing_points(current_index)
     except ValueError:
         # Skip this frame if it's the first frame and has missing points
+        frames.pop()  # Remove the frame we just added
         return
         
-    _smooth_points(bodypoints_by_timestamp, timestamp)
-    bodypoints = bodypoints_by_timestamp[timestamp]
-
-    robot_angles = _get_robotangles(bodypoints)
-    restrained_angles = _restrain_angles(robot_angles)
-
-    _restrain_position(restrained_angles, robot_bodypoints_by_timestamp, timestamp)
-    _restrain_speed(robot_bodypoints_by_timestamp, timestamp)
+    _smooth_points(current_index)
     
-    robot_bodypoints = robot_bodypoints_by_timestamp[timestamp]
-    final_angles = _get_robotangles_from_robot_bodypoints(robot_bodypoints)
+    # TODO: these two should instead also just take in the index
+    # Calculate robot angles based on the (now processed) bodypoints
+    current_frame.robot_angles = _get_robotangles(current_frame.bodypoints)
+    current_frame.robot_angles = _restrain_angles(current_frame.robot_angles)
+
+    _restrain_position(current_index)
+    _restrain_speed(current_index)
+    
+    final_angles = _get_robotangles_from_robot_bodypoints(current_frame.robot_bodypoints)
 
     # publish robot angles
     angles_msg = Angles()
@@ -79,43 +90,51 @@ def process_bodypoints(msg):
 
 
 # TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
-def _drop_bad_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+def _drop_bad_points(frame_index: int):
     """
-    Drop any points at the timstamp who's values are incorrect.
+    Drop any points at the specified frame index whose values are incorrect.
+    
+    Args:
+        frame_index: Index of the frame in the frames list
+
+    Returns:
+        None. The bodypoints are updated in-place in the frames list
     """
-    bodypoints = bodypoints_by_timestamp[timestamp]
+    
+    current_frame = frames[frame_index]
+    bodypoints = current_frame.bodypoints
     
     # Filter out any points with z-value = 0 (depth camera failure)
-    for point in bodypoints.items():
+    for point in bodypoints:
         if point is not None and point[2] == 0:
             point[2] = None
     
-    # Update the dictionary with filtered points
-    bodypoints_by_timestamp[timestamp] = bodypoints
+    # Update the frame with filtered points
+    current_frame.bodypoints = bodypoints
 
 
 # TODO: if interpolation is bad, make it smarter by using points from the future too (where they are present)
-def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+def _find_missing_points(frame_index: int):
     """
-    Use points in surrounding frames to populate guesses for any unfound bodypoints at the timestamp.
+    Use points in surrounding frames to populate guesses for any unfound bodypoints.
     If this is the first frame and we have missing points, throws an exception so the processing
     loop can skip this frame and wait for a better first frame.
 
     Uses velocity-based extrapolation from previous frames to predict the position of missing points.
-    We guarantee that after this function is called, all bodypoints in the timestamp will be populated.
+    We guarantee that after this function is called, all bodypoints in the frame will be populated.
     
     Args:
-        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
-        timestamp: The timestamp of the frame to process
+        frame_index: Index of the frame in the frames list
 
     Raises:
         ValueError: If this is the first frame and it has missing points
 
     Returns:
-        None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
+        None. The bodypoints are updated in-place in the frames list
     """
-
-    current_points = bodypoints_by_timestamp[timestamp]
+    
+    current_frame = frames[frame_index]
+    current_points = current_frame.bodypoints
     
     # Check if any points are missing entirely or have missing coordinates
     has_missing_data = False
@@ -127,8 +146,8 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             has_missing_data = True
             break
     
-    if timestamp - 1 not in bodypoints_by_timestamp:
-        # If this is the first frame (no previous frame exists)
+    # If this is the first frame
+    if frame_index == 0:
         if has_missing_data:
             raise ValueError("First frame has missing points - cannot interpolate without previous data")
         return  # First frame is complete, nothing to do
@@ -136,19 +155,17 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
     # Look for the previous frames to calculate velocity
     # We will average multiple frames to smooth values
     NUM_HISTORY_FRAMES = 5  # Number of previous frames to use for velocity calculation
-    available_frames = []
+    available_indices = []
     
-    # Find available previous frames, already in order from most recent to oldest
-    for i in range(1, NUM_HISTORY_FRAMES + 1):
-        if timestamp - i in bodypoints_by_timestamp:
-            available_frames.append(timestamp - i)
-    
-    # Need at least one previous frame
-    if not available_frames:
-        raise ValueError("No previous frames available for interpolation")
-    
+    # Find available previous frames, starting from most recent
+    # It is guaranteed that there will be at least one
+    for i in range(1, min(NUM_HISTORY_FRAMES + 1, frame_index + 1)):
+        available_indices.append(frame_index - i)
+
+
     # Get the most recent frame's points
-    prev_points = bodypoints_by_timestamp[available_frames[0]]
+    prev_frame = frames[available_indices[0]]
+    prev_points = prev_frame.bodypoints
     
     # For each point in the current frame
     for i in range(len(current_points)):
@@ -171,7 +188,7 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             continue
         
         # If we only have one previous frame, use its coordinates for missing values
-        if len(available_frames) == 1:
+        if len(available_indices) == 1:
             prev_x, prev_y, prev_z = prev_points[i]
             new_x = prev_x if needs_x else curr_x
             new_y = prev_y if needs_y else curr_y
@@ -184,15 +201,18 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             vz_values = []
             
             # Calculate velocities between consecutive frames
-            for j in range(len(available_frames) - 1):
-                curr_frame = available_frames[j]
-                prev_frame = available_frames[j + 1]
+            for j in range(len(available_indices) - 1):
+                curr_idx = available_indices[j]
+                prev_idx = available_indices[j + 1]
                 
-                curr_point = bodypoints_by_timestamp[curr_frame][i]
-                prev_point = bodypoints_by_timestamp[prev_frame][i]
+                curr_frame_pts = frames[curr_idx].bodypoints
+                prev_frame_pts = frames[prev_idx].bodypoints
                 
-                # Calculate velocity components only for needed coordinates
-                time_diff = curr_frame - prev_frame  # Assuming uniform timesteps
+                curr_point = curr_frame_pts[i]
+                prev_point = prev_frame_pts[i]
+                
+                # Calculate time difference
+                time_diff = frames[curr_idx].timestamp - frames[prev_idx].timestamp
                 
                 if needs_x:
                     vx = (curr_point[0] - prev_point[0]) / time_diff
@@ -208,7 +228,7 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             
             # Get most recent point and time since last frame
             most_recent_point = prev_points[i]
-            time_since_last = timestamp - available_frames[0]
+            time_since_last = current_frame.timestamp - prev_frame.timestamp
             
             # Calculate new coordinates only for those that need prediction
             new_x = curr_x
@@ -230,29 +250,31 @@ def _find_missing_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], times
             # Update only the coordinates that needed prediction
             current_points[i] = (new_x, new_y, new_z)
     
-    # Update the dictionary with our interpolated points
-    bodypoints_by_timestamp[timestamp] = current_points
+    # Update the frame with our interpolated points
+    current_frame.bodypoints = current_points
 
 
-def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+def _smooth_points(frame_index: int):
     """
-    Smoothen points at the timestamp by using surrounding frames, reducing noise and jitter.
+    Smoothen points at the specified frame by using surrounding frames, reducing noise and jitter.
     Ignores small variations between consecutive frames to produce smoother motion.
 
     Args:
-        bodypoints_by_timestamp: Dictionary mapping timestamps to their corresponding bodypoints
-        timestamp: The timestamp of the frame to smooth
+        frame_index: Index of the frame in the frames list
 
     Returns:
-        None. The bodypoints are updated in-place in the bodypoints_by_timestamp dictionary
+        None. The bodypoints are updated in-place in the frames list
     """
-
+    
     # If this is the first frame, no smoothing needed
-    if timestamp - 1 not in bodypoints_by_timestamp:
+    if frame_index == 0:
         return
     
-    current_points = bodypoints_by_timestamp[timestamp]
-    prev_points = bodypoints_by_timestamp[timestamp - 1]
+    current_frame = frames[frame_index]
+    prev_frame = frames[frame_index - 1]
+    
+    current_points = current_frame.bodypoints
+    prev_points = prev_frame.bodypoints
     
     # Define threshold for jitter (adjust as needed for sensitivity)
     JITTER_THRESHOLD = 0.01  # Small movement threshold
@@ -278,8 +300,8 @@ def _smooth_points(bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: 
         if movement_distance < JITTER_THRESHOLD:
             current_points[i] = (prev_x, prev_y, prev_z)
     
-    # Update the dictionary with smoothed points
-    bodypoints_by_timestamp[timestamp] = current_points
+    # Update the frame with smoothed points
+    current_frame.bodypoints = current_points
 
 
 def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
@@ -287,7 +309,7 @@ def _get_robotangles(bodypoints: Bodypoints_t) -> Robot_Angles_t:
     Convert human bodypoints to corresponding robot joint angles.
 
     Args:
-        bodypoints: Array of 33 body keypoints representing the human pose
+        bodypoints: Array of body keypoints representing the human pose
 
     Returns:
         Robot_Angles_t: The calculated robot joint angles that would mimic the human pose
@@ -324,37 +346,29 @@ def _restrain_angles(robot_angles: Robot_Angles_t) -> Robot_Angles_t:
     pass
 
 
-def _restrain_position(
-    robot_angles: Robot_Angles_t, 
-    robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t],
-    timestamp: int
-):
+def _restrain_position(frame_index: int):
     """
     Apply position constraints to prevent self-collision and cord tangling.
 
     Args:
-        robot_angles: The current robot joint angles
-        robot_bodypoints_by_timestamp: Dictionary storing robot bodypoints for each timestamp
-        timestamp: The current timestamp being processed
+        frame_index: Index of the frame in the frames list
 
     Returns:
-        None. Results are stored in robot_bodypoints_by_timestamp
+        None. Results are stored in the frame's robot_bodypoints
     """
 
-    # TODO: calculate robot bodypoints (or whatever type it'll be, we don't need all 33 points), then restrain them, and use them in restrain_speed too
     pass
 
 
-def _restrain_speed(robot_bodypoints_by_timestamp: Dict[int, Bodypoints_t], timestamp: int):
+def _restrain_speed(frame_index: int):
     """
     Apply speed constraints to ensure the robot's movements stay within velocity limits.
 
     Args:
-        robot_bodypoints_by_timestamp: Dictionary storing robot bodypoints for each timestamp
-        timestamp: The current timestamp being processed
+        frame_index: Index of the frame in the frames list
 
     Returns:
-        None. The robot bodypoints are updated in-place in robot_bodypoints_by_timestamp
+        None. The robot bodypoints are updated in-place in the frame
     """
 
     pass
