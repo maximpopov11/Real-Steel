@@ -1,9 +1,7 @@
-from custom_msg.msg import Landmarks, Angles
+from custom_msg.msg import Landmarks
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
-
 import rospy
-
 
 @dataclass
 class Frame:
@@ -392,7 +390,7 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
 def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
-    rospy.init_node('kinematics', anonymous=True)
+    rospy.init_node('preprocessing', anonymous=True)
     rospy.spin()
 
 

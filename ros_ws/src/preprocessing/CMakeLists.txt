@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(kinematics)
+project(preprocessing)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -100,7 +100,7 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES kinematics
+#  LIBRARIES preprocessing
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -118,7 +118,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/kinematics.cpp
+#   src/${PROJECT_NAME}/preprocessing.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -193,7 +193,7 @@ catkin_install_python(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/kinematics.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/preprocessing.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
