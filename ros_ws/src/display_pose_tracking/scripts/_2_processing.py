@@ -1,12 +1,10 @@
 from custom_msg.msg import Landmarks, Angles
-from custom_types import Bodypoints_t, Robot_Angles_t
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import rospy
 
 
-# TODO: do we really need to import custom_types?
 # TODO: should this file live elsewhere now?
 
 
@@ -14,9 +12,9 @@ import rospy
 class Frame:
     """Class to store all data related to a single frame."""
     timestamp: float
-    bodypoints: Optional[Bodypoints_t] = None
-    robot_angles: Optional[Robot_Angles_t] = None
-    robot_bodypoints: Optional[Bodypoints_t] = None
+    bodypoints: Optional[List[Tuple[float, float, float]]] = None
+    robot_angles: Optional[List[float]] = None
+    robot_bodypoints: Optional[List[Tuple[float, float, float]]] = None
 
 # List of frames ordered by timestamp
 frames: List[Frame] = []
