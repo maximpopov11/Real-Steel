@@ -17,10 +17,19 @@ moveit_commander.roscpp_initialize(sys.argv)
 robot = moveit_commander.RobotCommander()
 scene = moveit_commander.PlanningSceneInterface()
 
+# move group
 group_name = "right_arm"
 move_group = moveit_commander.MoveGroupCommander(group_name)
-move_group.set_end_effector_link("right_wrist_roll_joint")
+move_group.set_end_effector_link("right_rubber_hand")
+# move_group.set_pose_reference_frame("world")
+# move_group.set_num_planning_attempts(1)
+# move_group.set_planning_time(.05)  # 20Hz right now
+# move_group.allow_replanning(False)
+move_group.set_goal_joint_tolerance(0.001)
+move_group.set_goal_position_tolerance(0.01)
+move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation.?
 
+# CSV file
 csv_file = open("ik_joint_positions.csv", "w", newline="")
 writer = csv.writer(csv_file)
 joint_names = move_group.get_joints()
@@ -45,36 +54,35 @@ def generate_angles(msg):
     ]
 
 
-    # BASIC DEBUG INFO
-    # We can get the name of the reference frame for this robot:
-    planning_frame = move_group.get_planning_frame()
-    print("============ Planning frame: %s" % planning_frame)
-
-    # We can also print the name of the end-effector link for this group:
-    eef_link = move_group.get_end_effector_link()
-    print("============ End effector link: %s" % eef_link)
-
-    # We can get a list of all the groups in the robot:
-    group_names = robot.get_group_names()
-    print("============ Available Planning Groups:", robot.get_group_names())
-
-    # Sometimes for debugging it is useful to print the entire state of the
-    # robot:
-    print("============ Printing robot state")
-    print(robot.get_current_state())
-    print("")
-
-
     target_pose = geometry_msgs.msg.Pose()
-    target_pose.orientation.w = 1.0
-    target_pose.position.x = 0.4
-    target_pose.position.y = 0.4
-    target_pose.position.z = 0.4
+    target_pose.position.x = 0.14
+    target_pose.position.y = 0
+    target_pose.position.z = .4
 
     move_group.set_pose_target(target_pose)
+    #  move_group.set_named_target("random")
     success, plan, _, _ = move_group.plan()
-    print(f"It was a success: {success}")
-    print(f"PLANNNN: {plan}")
+    if success: 
+        print("===================================")
+        print(f"SUCCESS!!!")
+        print("===================================")
+    else:
+        print("FAILURE AT PLANNING")
+        # Get the current pose of the end-effector
+        current_pose = move_group.get_current_pose().pose
+
+        # Print the pose
+        print("Current end-effector pose:")
+        print("Position:")
+        print("  x:", current_pose.position.x)
+        print("  y:", current_pose.position.y)
+        print("  z:", current_pose.position.z)
+        print("Orientation:")
+        print("  x:", current_pose.orientation.x)
+        print("  y:", current_pose.orientation.y)
+        print("  z:", current_pose.orientation.z)
+        print("  w:", current_pose.orientation.w)
+
     return
 
     target_pose.position.x = relative_wrist_position[0]

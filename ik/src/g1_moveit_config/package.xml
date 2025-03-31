@@ -3,7 +3,7 @@
   <name>g1_moveit_config</name>
   <version>0.3.0</version>
   <description>
-     An automatically generated package with all the configuration and launch files for using the g1_dual_arm with the MoveIt Motion Planning Framework
+     An automatically generated package with all the configuration and launch files for using the g1_29dof_rev_1_0 with the MoveIt Motion Planning Framework
   </description>
   <author email="isaaclo@iastate.edu">Isaac Lo</author>
   <maintainer email="isaaclo@iastate.edu">Isaac Lo</maintainer>
