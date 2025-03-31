@@ -17,7 +17,7 @@ fig.canvas.mpl_connect('close_event', on_close)
 
 # Label the axes
 # Adjust the view so we mostly see the XY plane
-ax.view_init(elev=90, azim=90)  # Top-down view looking at the XY plane
+ax.view_init(elev=90, azim=90, roll=180)  # Top-down view looking at the XY plane
 
 instants_received = [0, 0]
 list_of_x_coord_lists, list_of_y_coord_lists, list_of_z_coord_lists = [[], []], [[], []], [[], []]
@@ -93,7 +93,7 @@ def app():
     while not rospy.is_shutdown():
         # Ensure the bounds of the graph are drawn correctly
         ax.set_xlim([-640, 640])
-        ax.set_ylim([-480, 480])
+        ax.set_ylim([0, 1280])
         ax.set_zlim([4, 0])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")

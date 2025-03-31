@@ -65,7 +65,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
             continue
 
         z_coord = depth_frame.get_distance(x_coord, y_coord)
-        landmarks_with_depth.append((x_coord, y_coord, z_coord))
+        landmarks_with_depth.append((x_coord, CAMERA_HEIGHT - y_coord, z_coord))
         rospy.loginfo(f"Pose detection took {timestamp() - timestamp_ms}ms!")
 
     msg = Landmarks()

@@ -102,7 +102,7 @@ def process_bodypoints(msg):
     preprocessed_msg.timestamp      = current_frame.timestamp
     pub.publish(preprocessed_msg)
     published_ts = int(time() * 1000)
-    rospy.loginfo(f"Published preprocessed points in {published_ts - begin_ts}ms")
+    rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
     
     # publish robot angles
     #angles_msg = Angles()
@@ -352,8 +352,8 @@ def _translate_points(frame_index : int):
     
     for point in current_frame.bodypoints:
         relative_bodypoints.append([
-            (0 + (point[0] - hip_middle[0])),
-            (0 + (point[1] - hip_middle[1])),
+            ((point[0] - hip_middle[0])),
+            ((point[1] - hip_middle[1])),
             point[2] - hip_middle[2]
         ])
     current_frame.bodypoints = relative_bodypoints
@@ -436,14 +436,14 @@ def pubtest():
     preprocessed_msg.left_hip       = [-45,0,0]
     preprocessed_msg.left_shoulder  = [0,0,0]
     preprocessed_msg.left_elbow     = [0,0,0]
-    preprocessed_msg.left_wrist     = [0,0,0]
+    preprocessed_msg.left_wrist     = [80, 20, 1]
     preprocessed_msg.left_pinky     = [0,0,0]
     preprocessed_msg.left_index     = [0,0,0]
     preprocessed_msg.left_thumb     = [0,0,0]
     preprocessed_msg.right_hip      = [45,0,0]
     preprocessed_msg.right_shoulder = [0,0,0]
     preprocessed_msg.right_elbow    = [0,0,0]
-    preprocessed_msg.right_wrist    = [-100, 20, 40]
+    preprocessed_msg.right_wrist    = [-80, 20, 1]
     preprocessed_msg.right_pinky    = [0,0,0]
     preprocessed_msg.right_index    = [0,0,0]
     preprocessed_msg.right_thumb    = [0,0,0]
@@ -454,7 +454,7 @@ def pubtest():
 def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
     rospy.init_node('preprocessing', anonymous=True)
-#    pubtest()
+    #pubtest()
     rospy.spin()
 
 

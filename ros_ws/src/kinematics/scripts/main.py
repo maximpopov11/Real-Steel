@@ -40,12 +40,11 @@ move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation
 #last_joint_values = move_group.get_current_joint_values()
 
 
-ROBOT_HIP_WIDTH_METERS = 0.15
+ROBOT_HIP_WIDTH_METERS = 0.25
 
 def generate_angles(msg):
-    #global last_joint_values  # We need to keep track of the last known joint values
+    before_ts = timestamp()
     rospy.wait_for_service("compute_ik")
-    print(timestamp(), msg)
     
     # Assume the points are preprocessed and relative to the midpoint of the hips
     right_shoulder = msg.right_shoulder
@@ -55,13 +54,14 @@ def generate_angles(msg):
     left_hip = msg.left_hip
     hips_distance = ((right_hip[0] - left_hip[0])**2 + (right_hip[1] - left_hip[1])**2 + (right_hip[2] - left_hip[2])**2)**(1/2)
     hip_scale_factor = ROBOT_HIP_WIDTH_METERS / hips_distance
+    z_scale_factor = ROBOT_HIP_WIDTH_METERS
 
     right_request = GetPositionIKRequest()
     right_request.ik_request.group_name = "right_arm"
     right_request.ik_request.ik_link_name = "right_rubber_hand"
-    right_request.ik_request.pose_stamped.pose.position.x = round(msg.right_wrist[2]*hip_scale_factor, 3)
+    right_request.ik_request.pose_stamped.pose.position.x = round(msg.right_wrist[2]*z_scale_factor, 3)
     right_request.ik_request.pose_stamped.pose.position.y = round(msg.right_wrist[0]*hip_scale_factor, 3)
-    right_request.ik_request.pose_stamped.pose.position.z = round(-1*msg.right_wrist[1]*hip_scale_factor, 3)
+    right_request.ik_request.pose_stamped.pose.position.z = round(msg.right_wrist[1]*hip_scale_factor, 3)
     right_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -71,17 +71,17 @@ def generate_angles(msg):
     left_request = GetPositionIKRequest()
     left_request.ik_request.group_name = "left_arm"
     left_request.ik_request.ik_link_name = "left_rubber_hand"
-    left_request.ik_request.pose_stamped.pose.position.x = round(msg.left_wrist[2]*hip_scale_factor, 3)
+    left_request.ik_request.pose_stamped.pose.position.x = round(msg.left_wrist[2]*z_scale_factor, 3)
     left_request.ik_request.pose_stamped.pose.position.y = round(msg.left_wrist[0]*hip_scale_factor, 3)
-    left_request.ik_request.pose_stamped.pose.position.z = round(-1*msg.left_wrist[1]*hip_scale_factor, 3)
+    left_request.ik_request.pose_stamped.pose.position.z = round(msg.left_wrist[1]*hip_scale_factor, 3)
     left_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.z = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.w = 1.0
     left_request.ik_request.avoid_collisions = True
 
-    print("Scale factor", hip_scale_factor, hips_distance)
-    print("Scaled wrist", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
+    #print("Scale factor", hip_scale_factor, hips_distance)
+    #print("Scaled wrist", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
 
     right_response : GetPositionIKResponse = False
     left_response : GetPositionIKResponse = False
@@ -91,14 +91,18 @@ def generate_angles(msg):
     except ValueError: 
         print("ValueError!")
 
-    print("response", right_response, left_response)
+    #print("response", right_response, left_response)
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
         angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0]
         angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0]
         pub.publish(angles_msg)
+        after_ts = timestamp()
+        rospy.loginfo(f"({after_ts - before_ts}ms): Left: {angles_msg.right_arm} Right: {angles_msg.right_arm}")
     else:
-        print("No angles computed")
+        lt = left_request.ik_request.pose_stamped.pose.position
+        rt = right_request.ik_request.pose_stamped.pose.position
+        rospy.logerr(f"{left_response.error_code.val}, ({lt.x}, {lt.y}, {lt.z}) | {right_response.error_code.val}, ({rt.x}, {rt.y}, {rt.z})")
 
 def app():
     sub = rospy.Subscriber('preprocessed', Landmarks, generate_angles)
