@@ -67,8 +67,12 @@ def process_bodypoints(msg):
         return
     found_missing_points_ts = int(time() * 1000)
     
+#    _smooth_points(current_index)
     _smooth_points(current_index)
     smoothed_points_ts = int(time() * 1000)
+
+    _translate_points(current_index)
+
     
     # Calculate robot angles based on the (now processed) bodypoints
     #_get_robotangles(current_index)
@@ -328,6 +332,33 @@ def _smooth_points(frame_index: int):
     # Update the frame with smoothed points
     current_frame.bodypoints = current_points
 
+def _translate_points(frame_index : int):
+    """
+    Convert all bodypoints at the given frame to relative to the midpoint of the hips
+    by averaging the midpoint of the hips and subtracting it from each point entrywise.
+
+    Assumes all points at the given frame are valid.
+    """
+    current_frame = frames[frame_index]
+    left_hip = current_frame.bodypoints[1]
+    right_hip = current_frame.bodypoints[8]
+    hip_middle = [
+        (left_hip[0] + right_hip[0]) / 2,
+        (left_hip[1] + right_hip[1]) / 2,
+        (left_hip[2] + right_hip[2]) / 2,
+    ]
+
+    relative_bodypoints = []
+    
+    for point in current_frame.bodypoints:
+        relative_bodypoints.append([
+            (0 + (point[0] - hip_middle[0])),
+            (0 + (point[1] - hip_middle[1])),
+            point[2] - hip_middle[2]
+        ])
+    current_frame.bodypoints = relative_bodypoints
+    
+
 
 def _get_robotangles(frame_index: int):
     """
@@ -399,10 +430,31 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
     pass
 
+def pubtest():
+    preprocessed_msg = Landmarks()
+    preprocessed_msg.nose           = [0,0,0]
+    preprocessed_msg.left_hip       = [-45,0,0]
+    preprocessed_msg.left_shoulder  = [0,0,0]
+    preprocessed_msg.left_elbow     = [0,0,0]
+    preprocessed_msg.left_wrist     = [0,0,0]
+    preprocessed_msg.left_pinky     = [0,0,0]
+    preprocessed_msg.left_index     = [0,0,0]
+    preprocessed_msg.left_thumb     = [0,0,0]
+    preprocessed_msg.right_hip      = [45,0,0]
+    preprocessed_msg.right_shoulder = [0,0,0]
+    preprocessed_msg.right_elbow    = [0,0,0]
+    preprocessed_msg.right_wrist    = [-100, 20, 40]
+    preprocessed_msg.right_pinky    = [0,0,0]
+    preprocessed_msg.right_index    = [0,0,0]
+    preprocessed_msg.right_thumb    = [0,0,0]
+    preprocessed_msg.timestamp      = int(time() * 1000)
+    pub.publish(preprocessed_msg)
+
 
 def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
     rospy.init_node('preprocessing', anonymous=True)
+#    pubtest()
     rospy.spin()
 
 

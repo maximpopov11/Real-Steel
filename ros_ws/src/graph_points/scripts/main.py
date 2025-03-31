@@ -92,8 +92,8 @@ def app():
     orange_and_blue_color_sets = all_orange_colors + all_blue_colors
     while not rospy.is_shutdown():
         # Ensure the bounds of the graph are drawn correctly
-        ax.set_xlim([0, 640])
-        ax.set_ylim([0, 480])
+        ax.set_xlim([-640, 640])
+        ax.set_ylim([-480, 480])
         ax.set_zlim([4, 0])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")
