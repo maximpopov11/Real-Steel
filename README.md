@@ -1,3 +1,16 @@
+## Preprocessing Testing
+
+1. Run `catkin_make`, source `devel/setup.bash`, and ensure you have all the latest python requirements
+2. Open a terminal, source setup, `roscore`
+3. Open a terminal, source setup, `rosrun graph_points main.py`
+4. Open a terminal, source setup, `rosrun preprocessing main.py`
+5. Open a terminal, source setup, `rosbag play rosbags/TIMESTAMPED.bag`
+6. Watch -- orange points are the raw data, blue points are the preprocessed output of the ROS preprocessing node.
+7. After the rosbag is finished, go ahead and kill the preprocessing node
+8. `rosbag play rosbags/PREPROCESSED` to see just the preprocessed points by themselves.
+9. Profit.
+
+## MP Info
 
 Primary mediapipe info:
 https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker
