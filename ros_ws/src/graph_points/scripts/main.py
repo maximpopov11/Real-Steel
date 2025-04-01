@@ -99,6 +99,8 @@ def app():
         ax.set_ylabel("Y (Up/Down)")
         ax.set_zlabel("Z (Forward/Backward)")
 
+        ax.set_box_aspect([16, 9, 1])
+
         plt.draw()
 
         # Small pause to allow the figure to update
