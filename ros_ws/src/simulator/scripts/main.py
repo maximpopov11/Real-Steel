@@ -1,38 +1,4 @@
-import rospy
-from custom_msg.msg import Angles
-from sim_util import timestamp
-
-import numpy as np
-
-import mujoco
-import mujoco.viewer
-
-# path to where git repo is
-home_path = '/home/db-triple/Desktop/git/sd15_reel-steel/' 
-model_path = 'models/unitree_g1/scene.xml'
-model = mujoco.MjModel.from_xml_path(home_path + model_path)
-data = mujoco.MjData(model)
-
-""" Joints we are currently using (just left/right shoulder & elbow) """
-left_arm_joint_names = [
-    "left_shoulder_pitch_joint", 
-    "left_shoulder_roll_joint", 
-    "left_shoulder_yaw_joint", 
-    "left_elbow_joint"
-]
-
-right_arm_joint_names = [
-    "right_shoulder_pitch_joint",
-    "right_shoulder_roll_joint",
-    "right_shoulder_yaw_joint",
-    "right_elbow_joint"
-]
-""""""
-
-""" Storage for joint id's """
-left_actuator_ids = []
-right_actuator_ids = []
-""""""
+from sim_util import *
 
 def setup_ids():
     """
@@ -72,7 +38,7 @@ def use_angles(msg):
     
 def app():
     sub = rospy.Subscriber('robot_angles', Angles, use_angles)
-    rospy.init_node('simulator', anonymous=True)
+    rospy.init_node('simulator', anonymous=False)
 
     # if id's of joints are not found exit simulation
     if setup_ids() == -1:
@@ -83,18 +49,18 @@ def app():
         # refresh rate for sim
         rate = rospy.Rate(60) # 60 Hz refresh
 
-        viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])
-        viewer.cam.distance = 2.0
-        viewer.cam.elevation = -20
-        viewer.cam.azimuth = 180
+        viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])   # camera looking at
+        viewer.cam.distance = 2.0                           # how far is camera from lookat
+        viewer.cam.elevation = -20                          # vertical rotation degrees
+        viewer.cam.azimuth = 180                            # horizontal rotation degrees
 
         while not rospy.is_shutdown() and viewer.is_running():
             # step in sim
             mujoco.mj_step(model, data)
 
             # lock and update viewer
-            with viewer.lock():
-                viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(data.time % 2)
+            # with viewer.lock():
+                # viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(data.time % 2)
 
             # sync viewer to display updated sim
             viewer.sync()
