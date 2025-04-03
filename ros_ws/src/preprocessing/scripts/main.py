@@ -431,24 +431,33 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
     pass
 
 def pubtest():
-    preprocessed_msg = Landmarks()
-    preprocessed_msg.nose           = [0,0,0]
-    preprocessed_msg.left_hip       = [-45,0,0]
-    preprocessed_msg.left_shoulder  = [0,0,0]
-    preprocessed_msg.left_elbow     = [0,0,0]
-    preprocessed_msg.left_wrist     = [80, 20, 1]
-    preprocessed_msg.left_pinky     = [0,0,0]
-    preprocessed_msg.left_index     = [0,0,0]
-    preprocessed_msg.left_thumb     = [0,0,0]
-    preprocessed_msg.right_hip      = [45,0,0]
-    preprocessed_msg.right_shoulder = [0,0,0]
-    preprocessed_msg.right_elbow    = [0,0,0]
-    preprocessed_msg.right_wrist    = [-80, 20, 1]
-    preprocessed_msg.right_pinky    = [0,0,0]
-    preprocessed_msg.right_index    = [0,0,0]
-    preprocessed_msg.right_thumb    = [0,0,0]
-    preprocessed_msg.timestamp      = int(time() * 1000)
-    pub.publish(preprocessed_msg)
+    t_pose_relative_to_hips = Landmarks()
+    t_pose_relative_to_hips.left_hip       = [-45,0,0]
+    t_pose_relative_to_hips.left_wrist     = [183, 95, 0]
+    t_pose_relative_to_hips.right_hip      = [45,0,0]
+    t_pose_relative_to_hips.right_shoulder = [45,95,0]
+    t_pose_relative_to_hips.right_wrist    = [-183, 95, 0]
+    t_pose_relative_to_hips.timestamp      = int(time() * 1000)
+
+
+    t_pose_absolute = Landmarks()
+    t_pose_absolute.left_hip            = [-0.125,0,0]
+    t_pose_absolute.left_wrist          = [.508, .27, 0]
+    t_pose_absolute.left_shoulder       = [-0.125,.27,0]
+    t_pose_absolute.right_hip           = [.125,0,0]
+    t_pose_absolute.right_wrist         = [-.508, .27, 0]
+    t_pose_absolute.right_shoulder      = [.125,.27,0]
+
+
+    a_pose_absolute = Landmarks()
+    a_pose_absolute.left_hip            = [-0.125,0,0]
+    a_pose_absolute.left_shoulder       = [-0.125,.27,0]
+    a_pose_absolute.left_wrist          = [.25, 0, 0]
+    a_pose_absolute.right_hip           = [.125,0,0]
+    a_pose_absolute.right_shoulder      = [.125,.27,0]
+    a_pose_absolute.right_wrist         = [-.25, 0, 0]
+
+    pub.publish(t_pose_absolute)
 
 
 def app():
