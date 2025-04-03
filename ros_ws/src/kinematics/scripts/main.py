@@ -35,7 +35,7 @@ move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation
 #last_joint_values = move_group.get_current_joint_values()
 
 
-ROBOT_HIP_WIDTH_METERS = 0.25
+ROBOT_HIP_METERS = 0.25
 ROBOT_SHOULDER_HIP_METERS = .27
 
 def compute_distance(p1, p2):
@@ -53,10 +53,12 @@ def generate_angles(msg):
     left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
     hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
-    horizontal_scale = ROBOT_HIP_WIDTH_METERS / hips_distance
+    # Compute horizontal and vertical left/right scale factors, so we can more accurately
+    # convert to the point we want IK for
+    horizontal_scale = ROBOT_HIP_METERS / hips_distance
     right_vertical_scale = ROBOT_SHOULDER_HIP_METERS / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_HIP_METERS / left_vertical_distance
-    z_scale_factor = ROBOT_HIP_WIDTH_METERS
+    z_scale_factor = ROBOT_HIP_METERS
 
     # Get a position position request and set it up for the right arm and hand
     # This should be updated to make one request for both left and right arms simultaneously.
