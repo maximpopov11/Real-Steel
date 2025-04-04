@@ -1,6 +1,6 @@
 import rospy
 from custom_msg.msg import Landmarks
-# from lib.util import *
+from util import *
 import numpy as np
 import mediapipe as mp
 import pyrealsense2 as rs
@@ -101,7 +101,9 @@ def configure_pipeline():
     pipeline.start(config)
     return pipeline
 
-pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
+# pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
+pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+
 depth_frame_dict = {}
 
 def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms: int):
@@ -146,7 +148,8 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     msg.timestamp       = timestamp_ms
 
     # rospy.loginfo(msg) # will continue to log in CLI msg being sent
-    pub.publish(msg)
+    # pub.publish(msg)
+    process_bodypoints(msg)
 
 def run():
     rospy.init_node('landmarks', anonymous=True)
