@@ -1,72 +1,13 @@
 import rospy
 from custom_msg.msg import Landmarks
-from util import process_bodypoints
+from util import *
 import numpy as np
 import mediapipe as mp
 import pyrealsense2 as rs
-import os
 import sys
-
-from time import time
-
-CAMERA_WIDTH = 640
-CAMERA_HEIGHT = 480
-MIN_POSE_DETECTION_CONFIDENCE = .95
-
-curr_dir = os.getcwd()
-
-LIB_DIR_PATH = os.path.join(curr_dir, "src/landmarks/lib")
-MP_LITE_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_lite.task"
-MP_FULL_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_full.task"
-MP_HEAVY_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_heavy.task"
 
 PUBLISH_RAW_POINTS = False
 PUBLISH_PREPROCESSED_POINTS = True
-
-def timestamp() -> int:
-    """Returns the current time in milliseconds since the epoch using time()."""
-    return int(time() * 1000)
-
-def get_relevant_landmarks(result):
-    """
-    Given a PoseLandmarker result, extract the relevant points we care about.
-    Returns a list containing, in order:
-    - 0 left hip
-    - 1 right hip
-    - 2 left shoulder
-    - 3 right shoulder
-    - 4 left elbow
-    - 5 right elbow
-    - 6 left wrist
-    - 7 right wrist
-    - 8 left pinky
-    - 9 right pinky
-    - 10 left index
-    - 11 right index
-    - 12 left thumb
-    - 13 right thumb
-    - 14 nose
-    """
-    landmarks = result.pose_landmarks[0]
-    return [
-            landmarks[23], 
-            landmarks[24], 
-            landmarks[11], 
-            landmarks[12], 
-            landmarks[13], 
-            landmarks[14], 
-            landmarks[15], 
-            landmarks[16],
-            landmarks[17],
-            landmarks[18],
-            landmarks[19],
-            landmarks[20],
-            landmarks[21],
-            landmarks[22],
-            landmarks[0]
-        ]
-
-
 
 mp_pose = mp.solutions.pose
 PoseLandmarkerResult = mp.tasks.vision.PoseLandmarkerResult
@@ -203,4 +144,3 @@ if __name__ == '__main__':
         run()
     except rospy.ROSInterruptException:
         pass
-    f
