@@ -20,7 +20,8 @@ MP_LITE_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_lite.task"
 MP_FULL_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_full.task"
 MP_HEAVY_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_heavy.task"
 
-COMBINED_PREPROCESSING_LANDMARS = False
+PUBLISH_RAW_POINTS = False
+PUBLISH_PREPROCESSED_POINTS = True
 
 def timestamp() -> int:
     """Returns the current time in milliseconds since the epoch using time()."""
@@ -74,6 +75,7 @@ PoseLandmarker = mp.tasks.vision.PoseLandmarker
 PoseLandmarkerOptions = mp.tasks.vision.PoseLandmarkerOptions
 VisionRunningMode = mp.tasks.vision.RunningMode
 mpImage = mp.Image
+landmarks_pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
 
 align_to = rs.stream.color
 align = rs.align(align_to)
@@ -103,14 +105,6 @@ def configure_pipeline():
     # Start streaming
     pipeline.start(config)
     return pipeline
-
-# Setup publishers if we want to debug preprocessing or have combined
-def setup_pubs():
-    global pub
-    if not COMBINED_PREPROCESSING_LANDMARS:
-        pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
-    else:
-        pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
 
 depth_frame_dict = {}
 
@@ -155,10 +149,11 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     msg.nose            = landmarks_with_depth[14]
     msg.timestamp       = timestamp_ms
 
-    if not COMBINED_PREPROCESSING_LANDMARS:
+    if PUBLISH_RAW_POINTS:
         rospy.loginfo(msg) # will continue to log in CLI msg being sent
-        pub.publish(msg)
-    else:
+        landmarks_pub.publish(msg)
+
+    if PUBLISH_PREPROCESSED_POINTS:
         process_bodypoints(msg)
 
 def run():
@@ -199,8 +194,13 @@ if __name__ == '__main__':
         # use flat -combine to run both as same node
         if len(sys.argv) > 1:
             if sys.argv[1] == '-combined':
-                COMBINED_PREPROCESSING_LANDMARS = True
-                setup_pubs()
+                PUBLISH_RAW_POINTS = True
+            elif sys.argv[1] == '-raw-only':
+                PUBLISH_RAW_POINTS = True
+                PUBLISH_PREPROCESSED_POINTS = False
+            
+
         run()
     except rospy.ROSInterruptException:
         pass
+    f

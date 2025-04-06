@@ -1,5 +1,4 @@
 from time import time
-from main import pub
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -90,7 +89,7 @@ class Frame:
 # List of frames ordered by timestamp
 frames: List[Frame] = []
 
-# pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+preprocessed_pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
 
 
 def process_bodypoints(msg):
@@ -175,9 +174,9 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
-    pub.publish(preprocessed_msg)
+    preprocessed_pub.publish(preprocessed_msg)
     published_ts = int(time() * 1000)
-    rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+    rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
     
     # publish robot angles
     #angles_msg = Angles()
@@ -523,7 +522,7 @@ def pubtest():
     preprocessed_msg.right_index    = [0,0,0]
     preprocessed_msg.right_thumb    = [0,0,0]
     preprocessed_msg.timestamp      = int(time() * 1000)
-    pub.publish(preprocessed_msg)
+    preprocessed_pub.publish(preprocessed_msg)
 
 
 # def app():
