@@ -1,6 +1,6 @@
 import rospy
 from custom_msg.msg import Landmarks
-from util import *
+from util import process_bodypoints
 import numpy as np
 import mediapipe as mp
 import pyrealsense2 as rs
