@@ -73,8 +73,8 @@ def generate_angles(msg):
     left_request.ik_request.avoid_collisions = True
 
     # Debug statements
-    rospy.loginfo("Scale factor", hip_scale_factor, hips_distance)
-    rospy.loginfo("Scaled wrist", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
+    rospy.loginfo("Scale factor: %f, Hips distance: %f", hip_scale_factor, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
 
     # Establish varialbes for the responses
     right_response : GetPositionIKResponse = False
