@@ -19,6 +19,8 @@ MP_LITE_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_lite.task"
 MP_FULL_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_full.task"
 MP_HEAVY_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_heavy.task"
 
+COMBINED_PREPROCESSING_LANDMARS = False
+
 def timestamp() -> int:
     """Returns the current time in milliseconds since the epoch using time()."""
     return int(time() * 1000)
@@ -101,8 +103,12 @@ def configure_pipeline():
     pipeline.start(config)
     return pipeline
 
-# pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
-pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+# Setup publishers if we want to debug preprocessing or have combined
+def setup():
+    if not COMBINED_PREPROCESSING_LANDMARS:
+        pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
+    else:
+        pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
 
 depth_frame_dict = {}
 
@@ -147,9 +153,11 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     msg.nose            = landmarks_with_depth[14]
     msg.timestamp       = timestamp_ms
 
-    # rospy.loginfo(msg) # will continue to log in CLI msg being sent
-    # pub.publish(msg)
-    process_bodypoints(msg)
+    if not COMBINED_PREPROCESSING_LANDMARS:
+        rospy.loginfo(msg) # will continue to log in CLI msg being sent
+        pub.publish(msg)
+    else:
+        process_bodypoints(msg)
 
 def run():
     rospy.init_node('landmarks', anonymous=True)
@@ -186,6 +194,11 @@ def run():
 
 if __name__ == '__main__':
     try:
+        # arg = sys.argv[1] if len(sys.argv) > 1 else None
+        if len(sys.argv) > 1:
+            if sys.argv[1] == '-combined':
+                COMBINED_PREPROCESSING_LANDMARS = True
+                setup_pubs()
         run()
     except rospy.ROSInterruptException:
         pass
