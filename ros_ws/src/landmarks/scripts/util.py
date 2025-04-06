@@ -1,4 +1,5 @@
 from time import time
+from main import pub
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -89,7 +90,7 @@ class Frame:
 # List of frames ordered by timestamp
 frames: List[Frame] = []
 
-pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+# pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
 
 
 def process_bodypoints(msg):
