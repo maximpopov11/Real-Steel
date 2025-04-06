@@ -5,6 +5,7 @@ import numpy as np
 import mediapipe as mp
 import pyrealsense2 as rs
 import os
+import sys
 
 from time import time
 
@@ -105,6 +106,7 @@ def configure_pipeline():
 
 # Setup publishers if we want to debug preprocessing or have combined
 def setup():
+    global pub
     if not COMBINED_PREPROCESSING_LANDMARS:
         pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
     else:
