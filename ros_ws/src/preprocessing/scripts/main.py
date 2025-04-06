@@ -102,7 +102,7 @@ def process_bodypoints(msg):
     preprocessed_msg.timestamp      = current_frame.timestamp
     pub.publish(preprocessed_msg)
     published_ts = int(time() * 1000)
-    rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+    rospy.loginfo(f"({published_ts - begin_ts}ms) Right: {preprocessed_msg.right_wrist} Left: {preprocessed_msg.left_wrist}")
     
     # publish robot angles
     #angles_msg = Angles()
@@ -457,7 +457,15 @@ def pubtest():
     a_pose_absolute.right_shoulder      = [.125,.27,0]
     a_pose_absolute.right_wrist         = [-.25, 0, 0]
 
-    pub.publish(t_pose_absolute)
+    zombie_pose_absolute = Landmarks()
+    zombie_pose_absolute.left_hip            = [-0.125,   0,  0]
+    zombie_pose_absolute.left_shoulder       = [-0.125, .27,  0]
+    zombie_pose_absolute.right_hip           = [  .125,   0,  0]
+    zombie_pose_absolute.right_shoulder      = [  .125, .27,  0]
+    zombie_pose_absolute.left_wrist          = [ 0.125, .28,  1.68]
+    zombie_pose_absolute.right_wrist         = [   -0.125, .28, 1.68]
+
+    pub.publish(zombie_pose_absolute)
 
 
 def app():

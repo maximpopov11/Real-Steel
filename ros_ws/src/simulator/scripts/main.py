@@ -47,7 +47,7 @@ def app():
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
         # refresh rate for sim
-        rate = rospy.Rate(60) # 60 Hz refresh
+        rate = rospy.Rate(10) # 60 Hz refresh
 
         viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])   # camera looking at
         viewer.cam.distance = 2.0                           # how far is camera from lookat

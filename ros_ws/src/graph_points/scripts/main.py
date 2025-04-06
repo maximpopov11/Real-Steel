@@ -94,12 +94,12 @@ def app():
         # Ensure the bounds of the graph are drawn correctly
         ax.set_xlim([-640, 640])
         ax.set_ylim([0, 480])
-        ax.set_zlim([4, 0])
+        ax.set_zlim([1, -1])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")
         ax.set_zlabel("Z (Forward/Backward)")
 
-        ax.set_box_aspect([16, 6, 1])
+        ax.set_box_aspect([16, 6, 6])
 
         plt.draw()
 

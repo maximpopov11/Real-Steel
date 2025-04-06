@@ -15,16 +15,16 @@ scene = moveit_commander.PlanningSceneInterface()
 compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
 # move group
-group_name = "right_arm"
-move_group = moveit_commander.MoveGroupCommander(group_name)
-move_group.set_end_effector_link("right_rubber_hand")
+#group_name = "right_arm"
+#move_group = moveit_commander.MoveGroupCommander(group_name)
+#move_group.set_end_effector_link("right_rubber_hand")
 # move_group.set_pose_reference_frame("world")
 # move_group.set_num_planning_attempts(1)
 # move_group.set_planning_time(.05)  # 20Hz right now
 # move_group.allow_replanning(False)
-move_group.set_goal_joint_tolerance(0.001)
-move_group.set_goal_position_tolerance(0.01)
-move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation.?
+#move_group.set_goal_joint_tolerance(0.001)
+#move_group.set_goal_position_tolerance(0.01)
+#move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation.?
 
 # CSV file
 #csv_file = open("ik_joint_positions.csv", "w", newline="")
@@ -58,7 +58,7 @@ def generate_angles(msg):
     horizontal_scale = ROBOT_HIP_METERS / hips_distance
     right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
-    z_scale_factor = ROBOT_HIP_METERS
+    z_scale_factor = -1.1
 
     # Get a position position request and set it up for the right arm and hand
     # This should be updated to make one request for both left and right arms simultaneously.
