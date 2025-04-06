@@ -194,7 +194,7 @@ def run():
 
 if __name__ == '__main__':
     try:
-        # arg = sys.argv[1] if len(sys.argv) > 1 else None
+        # use flat -combine to run both as same node
         if len(sys.argv) > 1:
             if sys.argv[1] == '-combined':
                 COMBINED_PREPROCESSING_LANDMARS = True
