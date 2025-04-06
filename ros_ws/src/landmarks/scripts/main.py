@@ -105,7 +105,7 @@ def configure_pipeline():
     return pipeline
 
 # Setup publishers if we want to debug preprocessing or have combined
-def setup():
+def setup_pubs():
     global pub
     if not COMBINED_PREPROCESSING_LANDMARS:
         pub = rospy.Publisher('landmarks', Landmarks, queue_size=10)
