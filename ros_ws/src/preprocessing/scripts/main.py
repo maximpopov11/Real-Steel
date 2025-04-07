@@ -544,7 +544,6 @@ def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
     rospy.init_node('preprocessing', anonymous=True)
     pubtest()
-    #rospy.spin()
 
 
 if __name__ == '__main__':

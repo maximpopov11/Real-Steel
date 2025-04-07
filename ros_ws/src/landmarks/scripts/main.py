@@ -97,6 +97,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     if PUBLISH_PREPROCESSED_POINTS:
         process_bodypoints(msg)
 
+
 def run():
     rospy.init_node('landmarks', anonymous=True)
 
