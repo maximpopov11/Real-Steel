@@ -92,27 +92,27 @@ def app():
     orange_and_blue_color_sets = all_orange_colors + all_blue_colors
     while not rospy.is_shutdown():
         # Ensure the bounds of the graph are drawn correctly
-        ax.set_xlim([-640, 640])
-        ax.set_ylim([0, 480])
-        ax.set_zlim([1, -1])
+        ax.set_xlim([-1, 1])
+        ax.set_ylim([0, 1.5])
+        ax.set_zlim([2, -2])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")
         ax.set_zlabel("Z (Forward/Backward)")
 
-        ax.set_box_aspect([16, 6, 6])
+        ax.set_box_aspect([5, 3.75, 4])
 
         plt.draw()
 
-        # Small pause to allow the figure to update
+        # Small pause to allow the figure to updates
         plt.pause(0.001)  
 
         # If the last frame was more than a tenth of a second ago, skip redrawing it
         if time.time() - instants_received[0] > .1 and time.time() - instants_received[1] > .1:
             continue
 
-        all_x_points = list_of_x_coord_lists[0] + list_of_x_coord_lists[1]
-        all_y_points = list_of_y_coord_lists[0] + list_of_y_coord_lists[1]
-        all_z_points = list_of_z_coord_lists[0] + list_of_z_coord_lists[1]
+        all_x_points = list_of_y_coord_lists[0] + list_of_y_coord_lists[1]
+        all_y_points = list_of_z_coord_lists[0] + list_of_z_coord_lists[1]
+        all_z_points = list_of_x_coord_lists[0] + list_of_x_coord_lists[1]
         color_set = all_orange_colors
         if len(all_x_points) > 15:
             color_set = orange_and_blue_color_sets

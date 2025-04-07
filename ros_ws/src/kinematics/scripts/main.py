@@ -34,7 +34,7 @@ compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
 #last_joint_values = move_group.get_current_joint_values()
 
-FUDGE_FACTOR = 0.5 / 0.8
+FUDGE_FACTOR = 0.7
 ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
 
@@ -49,16 +49,16 @@ def generate_angles(msg):
     rospy.wait_for_service("compute_ik")
     
     # Assume the points are preprocessed and relative to the midpoint of the hips
-    right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
-    left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
-    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
+    #right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
+    #left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
+    #hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
     # Compute horizontal and vertical left/right scale factors, so we can more accurately
     # convert to the point we want IK for
-    horizontal_scale = ROBOT_HIP_METERS / hips_distance
-    right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
-    left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
-    z_scale_factor = -1.1
+    #horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    #right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
+    #left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
+    #z_scale_factor = 1.1
 
     # Get a position position request and set it up for the right arm and hand
     # This should be updated to make one request for both left and right arms simultaneously.
@@ -70,9 +70,9 @@ def generate_angles(msg):
     # - Round because floating point can be weird (might be able to omit)
     # - Reorder which coordinates are used where, because the robot model is oriented facing in the y direction
     # - Scale the points by either the hip scale factor (for x and y) or the z_scale_factor
-    right_request.ik_request.pose_stamped.pose.position.x = round(msg.right_wrist[2]*z_scale_factor, 3)
-    right_request.ik_request.pose_stamped.pose.position.y = round(msg.right_wrist[0]*horizontal_scale, 3)
-    right_request.ik_request.pose_stamped.pose.position.z = round(msg.right_wrist[1]*right_vertical_scale, 3)
+    right_request.ik_request.pose_stamped.pose.position.x = msg.right_wrist[0]
+    right_request.ik_request.pose_stamped.pose.position.y = msg.right_wrist[1]
+    right_request.ik_request.pose_stamped.pose.position.z = msg.right_wrist[2]
     right_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -85,9 +85,9 @@ def generate_angles(msg):
     left_request = GetPositionIKRequest()
     left_request.ik_request.group_name = "left_arm"
     left_request.ik_request.ik_link_name = "left_rubber_hand"
-    left_request.ik_request.pose_stamped.pose.position.x = round(msg.left_wrist[2]*z_scale_factor, 3)
-    left_request.ik_request.pose_stamped.pose.position.y = round(msg.left_wrist[0]*horizontal_scale, 3)
-    left_request.ik_request.pose_stamped.pose.position.z = round(msg.left_wrist[1]*left_vertical_scale, 3)
+    left_request.ik_request.pose_stamped.pose.position.x = msg.left_wrist[0]
+    left_request.ik_request.pose_stamped.pose.position.y = msg.left_wrist[0]
+    left_request.ik_request.pose_stamped.pose.position.z = msg.left_wrist[0]
     left_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -95,8 +95,8 @@ def generate_angles(msg):
     left_request.ik_request.avoid_collisions = True
 
     # Debug statements
-    rospy.loginfo("Scale factor: %f, Hips distance: %f", hip_scale_factor, hips_distance)
-    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
+    #rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    #rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
 
     # Establish varialbes for the responses
     right_response : GetPositionIKResponse = False
@@ -121,11 +121,11 @@ def generate_angles(msg):
     else:
         lt = left_request.ik_request.pose_stamped.pose.position
         rt = right_request.ik_request.pose_stamped.pose.position
-        lw = msg.left_wrist
-        ls = msg.left_shoulder
-        rw = msg.right_wrist
-        rs = msg.right_shoulder
-        rospy.logerr(f"rvs: {right_vertical_scale} | {left_response.error_code.val}, ({lw[0]}, {lw[1]}, {lw[2]}) | {right_response.error_code.val}, ({rw[0]}, {rw[1]}, {rw[2]})")
+        #lw = msg.left_wrist
+        #ls = msg.left_shoulder
+        #rw = msg.right_wrist
+        #rs = msg.right_shoulder
+        #rospy.logerr(f"rvs: {right_vertical_scale} | {left_response.error_code.val}, ({lw[0]}, {lw[1]}, {lw[2]}) | {right_response.error_code.val}, ({rw[0]}, {rw[1]}, {rw[2]})")
         rospy.logerr(f"{left_response.error_code.val}, ({lt.x}, {lt.y}, {lt.z}) | {right_response.error_code.val}, ({rt.x}, {rt.y}, {rt.z})")
 
 
