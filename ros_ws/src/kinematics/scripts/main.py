@@ -34,8 +34,8 @@ compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
 #last_joint_values = move_group.get_current_joint_values()
 
-
-ROBOT_HIP_METERS = 0.25
+FUDGE_FACTOR = 0.5 / 0.8
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
 
 def compute_distance(p1, p2):
