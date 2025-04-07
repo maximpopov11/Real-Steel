@@ -21,6 +21,12 @@ class CsvWriterNode:
         rospy.loginfo("Subscribed to 'robot_angles' topic.")
 
     def callback(self, msg):
+        rospy.loginfo("Received angles message.")
+        rospy.loginfo(f"Message content: {msg}\n")
+        # Check if the message is valid
+        if not isinstance(msg, Angles):
+            rospy.logwarn("Received invalid message type.")
+            return
         # Extract timestamp from the message header
         timestamp = msg.header.stamp.to_sec()
         # Extract joint angles
