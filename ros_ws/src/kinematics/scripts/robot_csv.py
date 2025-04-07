@@ -20,6 +20,8 @@ class CsvWriterNode:
         self.subscriber = rospy.Subscriber('robot_angles', Angles, self.callback)
         rospy.loginfo("Subscribed to 'robot_angles' topic.")
 
+        self.time_count = 0
+
     def callback(self, msg):
         rospy.loginfo("Received angles message.")
         rospy.loginfo(f"Message content: {msg}\n")
@@ -29,7 +31,11 @@ class CsvWriterNode:
             return
         # Extract timestamp from the message header
         # timestamp = msg.header.stamp.to_sec()
-        timestamp = rospy.get_time()
+        # timestamp = rospy.get_time()
+
+        # timestamp inc 0.100 (1/10 second)
+        timestamp = f"{self.time_count:.3f}"
+
         # Extract joint angles
         left_arm = list(msg.left_arm)
         right_arm = list(msg.right_arm)
@@ -38,6 +44,8 @@ class CsvWriterNode:
         # Write to CSV
         self.writer.writerow(row)
         rospy.loginfo(f"Recorded angles at {timestamp}: left={left_arm}, right={right_arm}")
+
+        self.time_count += 0.100
 
     def shutdown_hook(self):
         self.file.close()
