@@ -335,6 +335,10 @@
     <position class="g1" name="right_wrist_yaw_joint" joint="right_wrist_yaw_joint"/>
   </actuator>
 
+  <equality>
+    <weld name="fix_pelvis_to_world" body1="pelvis" body2="world"/>
+  </equality>
+
   <sensor>
     <gyro site="imu_in_torso" name="imu-torso-angular-velocity" cutoff="34.9" noise="0.0005"/>
     <accelerometer site="imu_in_torso" name="imu-torso-linear-acceleration" cutoff="157" noise="0.01"/>
