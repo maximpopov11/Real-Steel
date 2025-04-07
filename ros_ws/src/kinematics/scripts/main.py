@@ -14,7 +14,32 @@ robot = moveit_commander.RobotCommander()
 scene = moveit_commander.PlanningSceneInterface()
 compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
-ROBOT_HIP_WIDTH_METERS = 0.25
+# move group
+group_name = "right_arm"
+move_group = moveit_commander.MoveGroupCommander(group_name)
+move_group.set_end_effector_link("right_rubber_hand")
+# move_group.set_pose_reference_frame("world")
+# move_group.set_num_planning_attempts(1)
+# move_group.set_planning_time(.05)  # 20Hz right now
+# move_group.allow_replanning(False)
+move_group.set_goal_joint_tolerance(0.001)
+move_group.set_goal_position_tolerance(0.01)
+move_group.set_goal_orientation_tolerance(1)  # don't care about the orientation.?
+
+# CSV file
+#csv_file = open("ik_joint_positions.csv", "w", newline="")
+#writer = csv.writer(csv_file)
+#joint_names = move_group.get_joints()
+#writer.writerow(["Pose Index"] + joint_names)  # Write CSV header
+
+#last_joint_values = move_group.get_current_joint_values()
+
+
+ROBOT_HIP_METERS = 0.25
+ROBOT_SHOULDER_TO_HIP = .27
+
+def compute_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
 
 def generate_angles(msg):
     # Get the timestamp so we can time how long this takes to run
@@ -24,17 +49,16 @@ def generate_angles(msg):
     rospy.wait_for_service("compute_ik")
     
     # Assume the points are preprocessed and relative to the midpoint of the hips
-    right_shoulder = msg.right_shoulder
-    right_elbow = msg.right_elbow
-    
-    # Compute the distance between the hips so we can get a scale factor to convert between pixel distance and meters
-    right_hip = msg.right_hip
-    left_hip = msg.left_hip
-    hips_distance = ((right_hip[0] - left_hip[0])**2 + (right_hip[1] - left_hip[1])**2 + (right_hip[2] - left_hip[2])**2)**(1/2)
-    hip_scale_factor = ROBOT_HIP_WIDTH_METERS / hips_distance
+    right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
+    left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
+    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
-    # z-coordinates should already be in meters, so we just need to scale to match the robot's proportions
-    z_scale_factor = ROBOT_HIP_WIDTH_METERS
+    # Compute horizontal and vertical left/right scale factors, so we can more accurately
+    # convert to the point we want IK for
+    horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
+    left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
+    z_scale_factor = ROBOT_HIP_METERS
 
     # Get a position position request and set it up for the right arm and hand
     # This should be updated to make one request for both left and right arms simultaneously.
@@ -44,13 +68,11 @@ def generate_angles(msg):
     
     # Set the pose position xyz:
     # - Round because floating point can be weird (might be able to omit)
-    # - Reorder which coordinates are used where, because the robot model is oriented facing in the y directions
+    # - Reorder which coordinates are used where, because the robot model is oriented facing in the y direction
     # - Scale the points by either the hip scale factor (for x and y) or the z_scale_factor
     right_request.ik_request.pose_stamped.pose.position.x = round(msg.right_wrist[2]*z_scale_factor, 3)
-    right_request.ik_request.pose_stamped.pose.position.y = round(msg.right_wrist[0]*hip_scale_factor, 3)
-    right_request.ik_request.pose_stamped.pose.position.z = round(msg.right_wrist[1]*hip_scale_factor, 3)
-
-    # Quaternion has to be set, but just needs to be orthogonal I believe
+    right_request.ik_request.pose_stamped.pose.position.y = round(msg.right_wrist[0]*horizontal_scale, 3)
+    right_request.ik_request.pose_stamped.pose.position.z = round(msg.right_wrist[1]*right_vertical_scale, 3)
     right_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     right_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -64,8 +86,8 @@ def generate_angles(msg):
     left_request.ik_request.group_name = "left_arm"
     left_request.ik_request.ik_link_name = "left_rubber_hand"
     left_request.ik_request.pose_stamped.pose.position.x = round(msg.left_wrist[2]*z_scale_factor, 3)
-    left_request.ik_request.pose_stamped.pose.position.y = round(msg.left_wrist[0]*hip_scale_factor, 3)
-    left_request.ik_request.pose_stamped.pose.position.z = round(msg.left_wrist[1]*hip_scale_factor, 3)
+    left_request.ik_request.pose_stamped.pose.position.y = round(msg.left_wrist[0]*horizontal_scale, 3)
+    left_request.ik_request.pose_stamped.pose.position.z = round(msg.left_wrist[1]*left_vertical_scale, 3)
     left_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -83,8 +105,8 @@ def generate_angles(msg):
         right_response = compute_ik(right_request)
         left_response = compute_ik(left_request)
     except ValueError: 
-        print("ValueError computing resource!")
-
+        print("ValueError!")
+    
     # If the error code is 1 we successfully did IK
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
@@ -97,7 +119,13 @@ def generate_angles(msg):
     else:
         lt = left_request.ik_request.pose_stamped.pose.position
         rt = right_request.ik_request.pose_stamped.pose.position
+        lw = msg.left_wrist
+        ls = msg.left_shoulder
+        rw = msg.right_wrist
+        rs = msg.right_shoulder
+        rospy.logerr(f"rvs: {right_vertical_scale} | {left_response.error_code.val}, ({lw[0]}, {lw[1]}, {lw[2]}) | {right_response.error_code.val}, ({rw[0]}, {rw[1]}, {rw[2]})")
         rospy.logerr(f"{left_response.error_code.val}, ({lt.x}, {lt.y}, {lt.z}) | {right_response.error_code.val}, ({rt.x}, {rt.y}, {rt.z})")
+
 
 def app():
     sub = rospy.Subscriber('preprocessed', Landmarks, generate_angles)

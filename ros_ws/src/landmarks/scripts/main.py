@@ -153,7 +153,7 @@ def run():
 
     rate = rospy.Rate(10)
     landmarker = PoseLandmarker.create_from_options(PoseLandmarkerOptions(
-            base_options=BaseOptions(model_asset_path=MP_FULL_MODEL_PATH),
+            base_options=BaseOptions(model_asset_path=MP_LITE_MODEL_PATH),
             min_pose_detection_confidence=MIN_POSE_DETECTION_CONFIDENCE,
             running_mode=VisionRunningMode.LIVE_STREAM,
             result_callback=callback
