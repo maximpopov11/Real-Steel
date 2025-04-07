@@ -86,8 +86,8 @@ def generate_angles(msg):
     left_request.ik_request.group_name = "left_arm"
     left_request.ik_request.ik_link_name = "left_rubber_hand"
     left_request.ik_request.pose_stamped.pose.position.x = msg.left_wrist[0]
-    left_request.ik_request.pose_stamped.pose.position.y = msg.left_wrist[0]
-    left_request.ik_request.pose_stamped.pose.position.z = msg.left_wrist[0]
+    left_request.ik_request.pose_stamped.pose.position.y = msg.left_wrist[1]
+    left_request.ik_request.pose_stamped.pose.position.z = msg.left_wrist[2]
     left_request.ik_request.pose_stamped.pose.orientation.x = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.y = 0.0
     left_request.ik_request.pose_stamped.pose.orientation.z = 0.0
@@ -106,7 +106,9 @@ def generate_angles(msg):
         left_response = compute_ik(left_request)
     except ValueError: 
         print("ValueError!")
-    
+    lt = left_request.ik_request.pose_stamped.pose.position
+    rt = right_request.ik_request.pose_stamped.pose.position
+
     # If the error code is 1 we successfully did IK
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
@@ -117,10 +119,10 @@ def generate_angles(msg):
         angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0]
         pub.publish(angles_msg)
         after_ts = timestamp()
-        rospy.loginfo(f"({after_ts - before_ts}ms): Left: {angles_msg.right_arm} Right: {angles_msg.right_arm}")
+       #rospy.loginfo(f"({after_ts - before_ts}ms): Angles Left: {angles_msg.left_arm} Right: {angles_msg.right_arm}")
+        rospy.loginfo(f"ROBOT_COORD_SYS LT: ({lt.x}, {lt.y}, {lt.z}) RT: ({rt.x}, {rt.y}, {rt.z})")
+        rospy.loginfo(f"CAMERA_COORD_SYS LT: ({lt.y}, {lt.z}, {lt.x}) RT: ({rt.y}, {rt.z}, {rt.x})")
     else:
-        lt = left_request.ik_request.pose_stamped.pose.position
-        rt = right_request.ik_request.pose_stamped.pose.position
         #lw = msg.left_wrist
         #ls = msg.left_shoulder
         #rw = msg.right_wrist

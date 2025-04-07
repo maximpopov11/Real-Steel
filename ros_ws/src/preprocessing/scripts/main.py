@@ -486,7 +486,7 @@ def pubtest():
 
     pub.publish(scaled)
 
-FUDGE_FACTOR = 0.7
+FUDGE_FACTOR = 1
 ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
 
@@ -514,6 +514,16 @@ def scale_to_robot(msg):
         msg.right_hip[2]*z_scale_factor,
         msg.right_hip[0]*horizontal_scale,
         msg.right_hip[1]*right_vertical_scale
+    ]
+    newMsg.right_shoulder = [
+        round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_shoulder[0]*horizontal_scale, 3),
+        round(msg.right_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_shoulder = [
+        round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_shoulder[0]*horizontal_scale, 3),
+        round(msg.left_shoulder[1]*right_vertical_scale, 3)
     ]
     newMsg.right_wrist = [
         round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
