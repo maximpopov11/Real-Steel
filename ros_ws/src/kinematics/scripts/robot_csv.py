@@ -28,7 +28,8 @@ class CsvWriterNode:
             rospy.logwarn("Received invalid message type.")
             return
         # Extract timestamp from the message header
-        timestamp = msg.header.stamp.to_sec()
+        # timestamp = msg.header.stamp.to_sec()
+        timestamp = rospy.get_time()
         # Extract joint angles
         left_arm = list(msg.left_arm)
         right_arm = list(msg.right_arm)
