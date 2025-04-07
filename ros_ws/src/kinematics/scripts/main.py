@@ -95,9 +95,8 @@ def generate_angles(msg):
     left_request.ik_request.avoid_collisions = True
 
     # Debug statements
-    print("Hip scale factor", hips_distance, horizontal_scale)
-    rospy.loginfo(f"Right Vertical distance + Scale Factor: {right_vertical_distance} {right_vertical_scale}")
-    #rospy.loginfo("Scaled wrist", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
+    rospy.loginfo("Scale factor: %f, Hips distance: %f", hip_scale_factor, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*hip_scale_factor, msg.right_wrist[1]*hip_scale_factor, msg.right_wrist[2]*hip_scale_factor)
 
     # Establish varialbes for the responses
     right_response : GetPositionIKResponse = False
@@ -111,6 +110,8 @@ def generate_angles(msg):
     # If the error code is 1 we successfully did IK
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
+        ### SET Time???? ###
+        # msg.header = Header(stamp=rospy.Time.now(), frame_id="your_frame_id") 
         # the returned position field is a 3-tuple; we need it to be a list. Also cropping out just the 4 angles we  want
         angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0]
         angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0]
