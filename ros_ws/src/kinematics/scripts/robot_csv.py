@@ -5,7 +5,6 @@ import csv
 import math
 from custom_msg.msg import Angles
 
-
 class CsvWriterNode:
     def __init__(self, output_filename):
         self.output_filename = output_filename
