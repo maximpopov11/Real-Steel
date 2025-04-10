@@ -1,8 +1,22 @@
 from custom_msg.msg import Landmarks
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
-import rospy
 from time import time
+from typing import List, Optional, Tuple
+import bisect
+import math
+import rospy
+import statistics
+
+
+# Initialize first_timestamp as None
+first_timestamp = None
+# Calibration period in seconds
+CALIBRATION_TIME = 10
+# Setup margin period in seconds prior to calibration included in CALIBRATION_TIME
+SETUP_MARGIN_TIME = 5
+
+left_arm_length: float = None
+right_arm_length: float = None
 
 @dataclass
 class Frame:
@@ -22,6 +36,7 @@ def process_bodypoints(msg):
     """
     Subscribe to a ROS topic to receive bodypoints.
     Frame data should come in by strictly increasing timestamp.
+    The first 10 seconds are given to calibration without any angle pubishing.
 
     Args:
         msg: ROS message in the form of msg.Landmarks
@@ -29,10 +44,40 @@ def process_bodypoints(msg):
     Returns:
         None. Angle results are published to ROS.
     """
+    global first_timestamp
+    global left_arm_length
+    global right_arm_length
+
     begin_ts = int(time() * 1000)
     # Parse msg
     landmarks = msg
     timestamp = landmarks.timestamp
+
+    # Initialize first timestamp if not set
+    if first_timestamp is None:
+        first_timestamp = timestamp
+        rospy.loginfo(f"Starting calibration period of {CALIBRATION_TIME} seconds. Will begin calibrating in {SETUP_MARGIN_TIME} seconds. Please T-Pose.")
+    
+    # When calibrating we won't publish results, but we'll still grab frames to have past data to work from in the future
+    calibrating = False
+    time_elapsed = (timestamp - first_timestamp) / 1000  # Convert to seconds
+    if time_elapsed < CALIBRATION_TIME:
+        calibrating = True
+
+        if time_elapsed > SETUP_MARGIN_TIME:
+            # We've given time to get in position
+            # We're in the calibration period, run calibration before normal processing (without publishing results)
+            _calibrate(msg)
+
+    # If this is the first frame we're done calibrating for lets set our arm length values
+    if not calibrating:
+        if not left_arm_length:
+            left_arm_length = _get_left_arm_length()
+            rospy.loginfo(f"Left arm length = {left_arm_length}")
+        if not right_arm_length:
+            right_arm_length = _get_right_arm_length()
+            rospy.loginfo(f"Right arm length = {right_arm_length}")
+
     bodypoints = [
         [x for x in landmarks.nose],
         [x for x in landmarks.left_hip],
@@ -100,9 +145,12 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
-    pub.publish(preprocessed_msg)
-    published_ts = int(time() * 1000)
-    rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+
+    if not calibrating:
+        # We don't want to publish if we're calibrating still
+        pub.publish(preprocessed_msg)
+        published_ts = int(time() * 1000)
+        rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
     
     # publish robot angles
     #angles_msg = Angles()
@@ -110,6 +158,110 @@ def process_bodypoints(msg):
     #angles_msg.left_arm = current_frame.robot_angles[0]
     #angles_msg.right_arm = current_frame.robot_angles[1]
     #pub.publish(angles_msg)
+
+
+# A sorted list of calculated arm lengths from frames
+_left_arm_lengths: List[float] = []
+_right_arm_lengths: List[float] = []
+
+
+def _get_left_arm_length() -> float:
+    """
+    Get the maximum found left arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    return _get_arm_length(_left_arm_lengths)
+
+
+def _get_right_arm_length() -> float:
+    """
+    Get the maximum found right arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    return _get_arm_length(_right_arm_lengths)
+
+
+def _get_arm_length(sorted_lengths: List[float]) -> float:
+    """
+    Get the maximum found arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    if not sorted_lengths:
+        return 0.0
+
+    if len(sorted_lengths) < 4:
+        # If not enough data to meaningfully detect outliers, return max
+        return sorted_lengths[-1]
+
+    # Sort the lengths to compute quartiles
+    q1 = statistics.quantiles(sorted_lengths, n=4)[0]  # 25th percentile
+    q3 = statistics.quantiles(sorted_lengths, n=4)[2]  # 75th percentile
+    iqr = q3 - q1
+
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    # Filter out outliers
+    filtered = [l for l in sorted_lengths if lower_bound <= l <= upper_bound]
+
+    if not filtered:
+        return sorted_lengths[-1]  # fallback if everything was removed
+
+    return sorted_lengths[-1]
+
+
+def _calibrate(msg):
+    """
+    Perform calibration to obtain arm lengths.
+    
+    Args:
+        bodypoints: The bodypoints from the current frame
+        timestamp: The timestamp of the current frame
+        
+    Returns:
+        None. Calibration data is stored internally.
+    """
+
+    left_points = [msg.left_shoulder, msg.left_elbow, msg.left_wrist]
+    right_points = [msg.right_shoulder, msg.right_elbow, msg.right_wrist]
+
+    # Check if any points do not exist or have invalid values
+    for points in [left_points, right_points]:
+        for point in points:
+            # Check if point is None, empty, or contains None values
+            if point is None or len(point) < 3 or None in point:
+                return
+            
+            # Also check for zero values in all coordinates (likely invalid data)
+            if all(v == 0 for v in point):
+                return
+
+    left_length = _get_length(left_points)
+    right_length = _get_length(right_points)
+
+    bisect.insort(_left_arm_lengths, left_length)
+    bisect.insort(_right_arm_lengths, right_length)
+
+
+def _get_length(points: List[List[float]]) -> float:
+    """
+    Get the length of the ordered set of 3D points.
+    """
+
+    if len(points) < 2:
+        return 0.0
+
+    total_length = 0.0
+    for i in range(1, len(points)):
+        p1, p2 = points[i - 1], points[i]
+        distance = math.sqrt(
+            (p2[0] - p1[0]) ** 2 +
+            (p2[1] - p1[1]) ** 2 +
+            (p2[2] - p1[2]) ** 2
+        )
+        total_length += distance
+
+    return total_length
 
 
 # TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
