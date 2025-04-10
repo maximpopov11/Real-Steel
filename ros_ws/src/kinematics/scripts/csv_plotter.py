@@ -4,10 +4,17 @@ import rospy
 import csv
 import matplotlib.pyplot as plt
 import os
+import sys
 
 class JointAnglePlotter:
     def __init__(self, input_filename):
-        self.input_filename = input_filename
+        self.input_filename = os.path.abspath(input_filename)
+        rospy.loginfo(f"Input file: {self.input_filename}")
+        
+        if not os.path.exists(self.input_filename):
+            rospy.logerr(f"File not found: {self.input_filename}")
+            sys.exit(1)
+            
         self.timestamps = []
         self.joint_angles = {
             'left': {i: {'values': [], 'start': 0.0} for i in range(5)},
@@ -22,6 +29,7 @@ class JointAnglePlotter:
             with open(self.input_filename, 'r') as f:
                 reader = csv.reader(f)
                 headers = next(reader)
+                rospy.loginfo(f"CSV headers: {headers}")
                 
                 for row_idx, row in enumerate(reader):
                     # Convert timestamp to relative time
@@ -90,10 +98,25 @@ class JointAnglePlotter:
 
 def main():
     rospy.init_node('joint_angle_visualizer')
+    
+    # Get input file parameter with validation
     input_file = rospy.get_param('~input_file', 'angles.csv')
+    rospy.loginfo(f"Received input file parameter: {input_file}")
+    
+    # Convert to absolute path
+    input_file = os.path.abspath(input_file)
     
     try:
         plotter = JointAnglePlotter(input_file)
     except Exception as e:
         rospy.logerr(f"Visualization failed: {str(e)}")
+        sys.exit(1)
+    
+    rospy.signal_shutdown("Visualization complete")
+
+if __name__ == '__main__':
+    try:
+        main()
+    except rospy.ROSInterruptException:
+        pass
     
