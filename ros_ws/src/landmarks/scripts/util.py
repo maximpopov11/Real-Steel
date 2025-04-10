@@ -657,7 +657,6 @@ ROBOT_SHOULDER_TO_HIP = .27
 ROBOT_ARM_LENGTH = 0.43
 
 
-
 def scale_to_robot(msg):
     right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
     left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
