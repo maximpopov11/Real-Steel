@@ -18,6 +18,8 @@ ax.view_init(elev=90, azim=90, roll=180)  # Top-down view looking at the XY plan
 
 instants_received = [0, 0]
 list_of_x_coord, list_of_y_coord, list_of_z_coord = [], [], []
+
+
 def get_plotting_callback(msg):
     global instants_received, list_of_z_coord_lists, list_of_x_coord_lists, list_of_y_coord_lists
     # Set the moment we got these for the while loop later to use
@@ -76,6 +78,7 @@ def get_plotting_callback(msg):
     ]
     return
 
+
 def app():
     sub = rospy.Subscriber('preprocessed', Landmarks, get_plotting_callback())
     rospy.init_node('POSE_Display_Preprocessed', anonymous=True)
@@ -102,6 +105,7 @@ def app():
 
     print("exited loop")
     
+
 if __name__ == '__main__':
     try:
         app()
