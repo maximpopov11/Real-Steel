@@ -97,7 +97,7 @@ def app():
         plt.pause(0.001)  
 
         # If the last frame was more than a tenth of a second ago, skip redrawing it
-        if time.time() - instants_received > .1 and time.time() - instants_received[1] > .1:
+        if time.time() - instants_received > .1 and time.time() - instants_received > .1:
             continue
 
         ax.clear()

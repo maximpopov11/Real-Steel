@@ -20,7 +20,7 @@ instants_received = 0
 list_of_x_coord, list_of_y_coord, list_of_z_coord = [], [], []
 
 
-def get_plotting_callback(msg):
+def plotting_callback(msg):
     global instants_received, list_of_z_coord_lists, list_of_x_coord_lists, list_of_y_coord_lists
     # Set the moment we got these for the while loop later to use
     instants_received = time.time()
@@ -80,7 +80,7 @@ def get_plotting_callback(msg):
 
 
 def app():
-    sub = rospy.Subscriber('landmarks', Landmarks, get_plotting_callback())
+    sub = rospy.Subscriber('landmarks', Landmarks, plotting_callback)
     rospy.init_node('POSE_Display_Raw_Landmarks', anonymous=True)
     all_orange_colors = ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange']
     while not rospy.is_shutdown():
@@ -97,7 +97,7 @@ def app():
         plt.pause(0.001)  
 
         # If the last frame was more than a tenth of a second ago, skip redrawing it
-        if time.time() - instants_received > .1 and time.time() - instants_received[1] > .1:
+        if time.time() - instants_received > .1 and time.time() - instants_received > .1:
             continue
 
         ax.clear()
