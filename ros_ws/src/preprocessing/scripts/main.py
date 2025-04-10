@@ -75,7 +75,7 @@ def process_bodypoints(msg):
             left_arm_length = _get_left_arm_length()
             rospy.loginfo(f"Left arm length = {left_arm_length}")
         if not right_arm_length:
-            left_arm_length = _get_right_arm_length
+            right_arm_length = _get_right_arm_length
             rospy.loginfo(f"Right arm length = {right_arm_length}")
 
     bodypoints = [
