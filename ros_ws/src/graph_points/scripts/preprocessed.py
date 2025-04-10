@@ -74,7 +74,7 @@ def get_plotting_callback(msg):
         msg.right_thumb[2],
         msg.nose[2]
     ]
-return plot_landmarks_in_3d
+    return
 
 def app():
     sub = rospy.Subscriber('preprocessed', Landmarks, get_plotting_callback())
