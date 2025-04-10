@@ -1,0 +1,91 @@
+IK research: https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel/-/issues/37
+
+copied down below with bad formatting:
+
+This is a dummy issue to hold some of the research we do for IK.
+
+
+https://automaticaddison.com/inverse-kinematics-ros-2-jazzy-moveit-task-constructor/ tutorial of ros2 IK
+
+https://robotics.stackexchange.com/questions/110954/moveit-inverse-kinematics some talk about IK on stack exchange
+
+https://moveit.picknik.ai/humble/index.html wrong version, it's really easy to find the humble version of this for some reason.
+
+https://nu-msr.github.io/ros_notes/ros2/moveit.html ros2 moveit
+
+https://moveit.github.io/moveit_tutorials/
+
+This is what we need. Found it.
+
+https://discourse.ros.org/c/moveit/13
+
+https://discourse.ros.org/search?q=unitree with query
+
+https://www.youtube.com/watch?v=BJdgYw7xq74
+Slightly distracted
+
+https://www.youtube.com/watch?v=xujIKvlPk8E
+It is better than me at getting up
+
+https://www.reddit.com/r/robotics/comments/1i2pilw/unitree_g1_bionic_agile_upgrade/
+Now if I could run...
+
+https://www.unitree.com/opensource
+Found this page in last research run. It's great.
+
+https://github.com/unitreerobotics/unitree_ros
+This is what we would use to control the G1 robot, but I don't think Bowen is using it?
+
+https://github.com/unitreerobotics/unitree_ros_to_real
+Same as above
+
+embedded image
+uhoh
+
+https://discourse.ros.org/t/ros-news-for-the-week-of-december-2nd-2024/40997
+Above from this link
+
+https://discourse.ros.org/t/low-level-hacked-support-for-non-edu-unitree-go1-dogs-air-pro-max/31849
+Please hack g1 next.
+
+https://moveit.ai/install/
+install page
+
+https://moveit.ai/documentation/applications/
+fun videos
+
+https://github.com/unitreerobotics/unitree_ros/tree/master/robots
+This has URDFs and xarcos
+
+https://github.com/unitreerobotics/unitree_ros/tree/master/robots/g1_description
+This has the xarco (xml macro files) and URDFs.
+
+📓 We want the dual arm one (no legs)
+
+https://moveit.ai/install/source/dependencies/
+Need this for installs
+
+https://launchpad.net/ubuntu/noble/amd64/libfcl-dev
+It's prebuild lol
+
+https://moveit.github.io/moveit_tutorials/doc/ikfast/ikfast_tutorial.html
+IK fast tutorial
+
+https://moveit.github.io/moveit_tutorials/doc/multiple_robot_arms/multiple_robot_arms_tutorial.html
+Multiple arms tutorial
+
+https://wiki.ros.org/ros_control
+ros control
+
+https://gazebosim.org/docs/latest/ros_installation/
+download gazebo
+
+https://moveit.github.io/moveit_tutorials/doc/move_group_python_interface/move_group_python_interface_tutorial.html
+move it with python :D
+
+https://moveit.github.io/moveit_tutorials/doc/move_group_python_interface/move_group_python_interface_tutorial.html#planning-to-a-pose-goal
+🚨 🚨 This could be how we use our reverse kinematics.
+
+Isaac Lo
+https://openrave.org/docs/latest_stable/openravepy/ikfast/#ik-types
+IK Types from open rave.
