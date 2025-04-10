@@ -157,6 +157,29 @@ def process_bodypoints(msg):
             right_arm_length = _get_right_arm_length()
             rospy.loginfo(f"Right arm length = {right_arm_length}")
 
+    # Sometimes Mediapipe gives our hands way too far away from our shoulders, let's drop these points
+    # Check if hands are too far from shoulders and drop them if they exceed a reasonable distance
+    MAX_ARM_LENGTH_FACTOR = 1.1  # Maximum allowed distance as a factor of expected arm length
+    
+    # Calculate distances from shoulders to hands
+    if landmarks.left_shoulder and landmarks.left_wrist and left_arm_length:
+        left_dist = compute_distance(landmarks.left_shoulder, landmarks.left_wrist)
+        if left_dist > MAX_ARM_LENGTH_FACTOR * left_arm_length:
+            rospy.logwarn(f"Left hand too far from shoulder ({left_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * left_arm_length:.2f}), dropping point")
+            landmarks.left_wrist = None
+            landmarks.left_pinky = None
+            landmarks.left_index = None
+            landmarks.left_thumb = None
+    
+    if landmarks.right_shoulder and landmarks.right_wrist and right_arm_length:
+        right_dist = compute_distance(landmarks.right_shoulder, landmarks.right_wrist)
+        if right_dist > MAX_ARM_LENGTH_FACTOR * right_arm_length:
+            rospy.logwarn(f"Right hand too far from shoulder ({right_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * right_arm_length:.2f}), dropping point")
+            landmarks.right_wrist = None
+            landmarks.right_pinky = None
+            landmarks.right_index = None
+            landmarks.right_thumb = None
+
     bodypoints = [
         [x for x in landmarks.nose],
         [x for x in landmarks.left_hip],
@@ -328,7 +351,6 @@ def _get_length(points: List[List[float]]) -> float:
     return total_length
 
 
-# TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
 def _drop_bad_points(frame_index: int):
     """
     Drop any points at the specified frame index whose values are incorrect.
