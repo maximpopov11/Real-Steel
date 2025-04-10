@@ -1,7 +1,6 @@
 from custom_msg.msg import Landmarks
 from dataclasses import dataclass
 from time import time
-from time import time
 from typing import List, Optional, Tuple
 import bisect
 import math
@@ -9,7 +8,8 @@ import rospy
 import statistics
 
 
-first_timestamp: int = None
+# Initialize first_timestamp as None
+first_timestamp = None
 # Calibration period in seconds
 CALIBRATION_TIME = 10
 # Setup margin period in seconds prior to calibration included in CALIBRATION_TIME
@@ -73,8 +73,10 @@ def process_bodypoints(msg):
     if not calibrating:
         if not left_arm_length:
             left_arm_length = _get_left_arm_length()
+            rospy.loginfo(f"Left arm length = {left_arm_length}")
         if not right_arm_length:
             left_arm_length = _get_right_arm_length
+            rospy.loginfo(f"Right arm length = {right_arm_length}")
 
     bodypoints = [
         [x for x in landmarks.nose],
