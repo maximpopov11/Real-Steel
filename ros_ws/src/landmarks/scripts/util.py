@@ -166,19 +166,19 @@ def process_bodypoints(msg):
         left_dist = compute_distance(landmarks.left_shoulder, landmarks.left_wrist)
         if left_dist > MAX_ARM_LENGTH_FACTOR * left_arm_length:
             rospy.logwarn(f"Left hand too far from shoulder ({left_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * left_arm_length:.2f}), dropping point")
-            landmarks.left_wrist = []
-            landmarks.left_pinky = []
-            landmarks.left_index = []
-            landmarks.left_thumb = []
+            landmarks.left_wrist = [None, None, None]
+            landmarks.left_pinky = [None, None, None]
+            landmarks.left_index = [None, None, None]
+            landmarks.left_thumb = [None, None, None]
     
     if landmarks.right_shoulder and landmarks.right_wrist and right_arm_length:
         right_dist = compute_distance(landmarks.right_shoulder, landmarks.right_wrist)
         if right_dist > MAX_ARM_LENGTH_FACTOR * right_arm_length:
             rospy.logwarn(f"Right hand too far from shoulder ({right_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * right_arm_length:.2f}), dropping point")
-            landmarks.right_wrist = []
-            landmarks.right_pinky = []
-            landmarks.right_index = []
-            landmarks.right_thumb = []
+            landmarks.right_wrist = [None, None, None]
+            landmarks.right_pinky = [None, None, None]
+            landmarks.right_index = [None, None, None]
+            landmarks.right_thumb = [None, None, None]
 
     bodypoints = [
         [x for x in landmarks.nose],
