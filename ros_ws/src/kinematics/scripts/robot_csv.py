@@ -29,10 +29,15 @@ class CsvWriterNode:
             return []
         interpolated = []
         for step in range(1, num_steps + 1):
-            alpha = step / num_steps
+            # Calculate interpolation ratio (0 = start, 1 = end)
+            alpha = step / num_steps  # Ranges from 1/num_steps to 1.0
+            # Linear interpolation for each joint: 
+            # angle = start + (end - start) * progress_ratio
             interp = [s + alpha * (e - s) for s, e in zip(start_angles, end_angles)]
+            # Store this interpolated step
             interpolated.append(interp)
         return interpolated
+    
 
     def callback(self, msg):
         rospy.loginfo("Received angles message.")
@@ -64,9 +69,9 @@ class CsvWriterNode:
         # Find the maximum speed across all joints
         max_speed = max(speed_per_joint)
 
-        if max_speed > 34.0:  # Threshold is 34 rad/s
-            # Calculate required steps to stay under 34 rad/s
-            required_steps = math.ceil(max_speed / 34.0)
+        if max_speed > 35.0:  # Threshold is 35 rad/s
+            # Calculate required steps to stay under 35 rad/s
+            required_steps = math.ceil(max_speed / 35.0)
             rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
             interpolated = self.interpolate_points(self.last_angles, current_angles, required_steps)
             for angles in interpolated:
@@ -86,7 +91,7 @@ class CsvWriterNode:
             rospy.loginfo(f"Recorded angles at {timestamp}")
             self.time_count += 0.1
             self.last_angles = current_angles
-            
+
     def shutdown_hook(self):
         self.file.close()
         rospy.loginfo(f"CSV file '{self.output_filename}' closed.")
