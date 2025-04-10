@@ -55,11 +55,13 @@ def process_bodypoints(msg):
     # When calibrating we won't publish results, but we'll still grab frames to have past data to work from in the future
     calibrating = False
     time_elapsed = (timestamp - first_timstamp) / 1000  # Convert to seconds
-    if SETUP_MARGIN_TIME < time_elapsed < CALIBRATION_TIME:
-        # We've given time to get in position
-        # We're in the calibration period, run calibration before normal processing (without publishing results)
+    if time_elapsed < CALIBRATION_TIME:
         calibrating = True
-        _calibrate(msg)
+
+        if time_elapsed > SETUP_MARGIN_TIME:
+            # We've given time to get in position
+            # We're in the calibration period, run calibration before normal processing (without publishing results)
+            _calibrate(msg)
 
     bodypoints = [
         [x for x in landmarks.nose],
