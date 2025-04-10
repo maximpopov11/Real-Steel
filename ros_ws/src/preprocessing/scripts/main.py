@@ -14,6 +14,9 @@ CALIBRATION_TIME = 10
 # Setup margin period in seconds prior to calibration included in CALIBRATION_TIME
 SETUP_MARGIN_TIME = 5
 
+left_arm_length: float = None
+right_arm_length: float = None
+
 @dataclass
 class Frame:
     """Class to store all data related to a single frame."""
@@ -41,6 +44,8 @@ def process_bodypoints(msg):
         None. Angle results are published to ROS.
     """
     global first_timstamp
+    global left_arm_length
+    global right_arm_length
 
     begin_ts = int(time() * 1000)
     # Parse msg
@@ -62,6 +67,13 @@ def process_bodypoints(msg):
             # We've given time to get in position
             # We're in the calibration period, run calibration before normal processing (without publishing results)
             _calibrate(msg)
+
+    # If this is the first frame we're done calibrating for lets set our arm length values
+    if not calibrating:
+        if not left_arm_length:
+            left_arm_length = _get_left_arm_length()
+        if not right_arm_length:
+            left_arm_length = _get_right_arm_length
 
     bodypoints = [
         [x for x in landmarks.nose],
