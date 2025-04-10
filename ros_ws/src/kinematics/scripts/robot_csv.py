@@ -86,9 +86,10 @@ class CsvWriterNode:
             rospy.loginfo(f"Recorded angles at {timestamp}")
             self.time_count += 0.1
             self.last_angles = current_angles
-        def shutdown_hook(self):
-            self.file.close()
-            rospy.loginfo(f"CSV file '{self.output_filename}' closed.")
+            
+    def shutdown_hook(self):
+        self.file.close()
+        rospy.loginfo(f"CSV file '{self.output_filename}' closed.")
 
 def main():
     rospy.init_node('robot_csv')
