@@ -158,6 +158,7 @@ include_directories(
 catkin_install_python(PROGRAMS
   scripts/main.py
   scripts/preprocessed.py
+  scripts/raw.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
