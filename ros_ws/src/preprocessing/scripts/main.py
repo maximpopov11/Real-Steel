@@ -52,14 +52,14 @@ def process_bodypoints(msg):
         first_timstamp = timestamp
         rospy.loginfo(f"Starting calibration period of {CALIBRATION_TIME} seconds. Will begin calibrating in {SETUP_MARGIN_TIME} seconds. Please T-Pose.")
     
+    # When calibrating we won't publish results, but we'll still grab frames to have past data to work from in the future
+    calibrating = False
     time_elapsed = (timestamp - first_timstamp) / 1000  # Convert to seconds
-    if time_elapsed < SETUP_MARGIN_TIME:
-        # We give time to get in position
-        return
-    if time_elapsed < CALIBRATION_TIME:
-        # We're in the calibration period, run calibration instead of normal processing
+    if SETUP_MARGIN_TIME < time_elapsed < CALIBRATION_TIME:
+        # We've given time to get in position
+        # We're in the calibration period, run calibration before normal processing (without publishing results)
+        calibrating = True
         _calibrate(msg)
-        return
 
     bodypoints = [
         [x for x in landmarks.nose],
@@ -128,9 +128,12 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
-    pub.publish(preprocessed_msg)
-    published_ts = int(time() * 1000)
-    rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+
+    if not calibrating:
+        # We don't want to publish if we're calibrating still
+        pub.publish(preprocessed_msg)
+        published_ts = int(time() * 1000)
+        rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
     
     # publish robot angles
     #angles_msg = Angles()
