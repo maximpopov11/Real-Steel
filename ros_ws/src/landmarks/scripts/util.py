@@ -94,6 +94,7 @@ class Frame:
 frames: List[Frame] = []
 
 preprocessed_pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+scaled_pub = rospy.Publisher('scaled', Landmarks, queue_size=10)
 
 
 def process_bodypoints(msg):
@@ -145,21 +146,10 @@ def process_bodypoints(msg):
         return
     found_missing_points_ts = int(time() * 1000)
     
-#    _smooth_points(current_index)
     _smooth_points(current_index)
     smoothed_points_ts = int(time() * 1000)
 
     _translate_points(current_index)
-
-    
-    # Calculate robot angles based on the (now processed) bodypoints
-    #_get_robotangles(current_index)
-    #_restrain_angles(current_index)
-
-    #_restrain_position(current_index)
-    #_restrain_speed(current_index)
-    
-    #_get_robotangles_from_robot_bodypoints(current_index)
 
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = current_frame.bodypoints[0]
@@ -181,13 +171,9 @@ def process_bodypoints(msg):
     preprocessed_pub.publish(preprocessed_msg)
     published_ts = int(time() * 1000)
     rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
-    
-    # publish robot angles
-    #angles_msg = Angles()
-    #current_frame = frames[current_index]
-    #angles_msg.left_arm = current_frame.robot_angles[0]
-    #angles_msg.right_arm = current_frame.robot_angles[1]
-    #pub.publish(angles_msg)
+
+    scaled_msg = scale_to_robot(preprocessed_msg)
+    scaled_pub.publish(scaled_msg)
 
 
 # TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
@@ -508,6 +494,9 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
     pass
 
+def compute_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
+
 def pubtest():
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = [0,0,0]
@@ -528,16 +517,51 @@ def pubtest():
     preprocessed_msg.timestamp      = int(time() * 1000)
     preprocessed_pub.publish(preprocessed_msg)
 
+FUDGE_FACTOR = 0.7
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
+ROBOT_SHOULDER_TO_HIP = .27
 
-# def app():
-#     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
-#     rospy.init_node('preprocessing', anonymous=True)
-#     #pubtest()
-#     rospy.spin()
+def scale_to_robot(msg):
+    right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
+    left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
+    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
+    horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
+    left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
+    z_scale_factor = 1.1
 
-# if __name__ == '__main__':
-#     try:
-#         app()
-#     except rospy.ROSInterruptException:
-#         pass 
+    newMsg = Landmarks()
+    newMsg.left_hip = [                      # camera coords <-> robot coords
+        msg.left_hip[2]*z_scale_factor,      # z <-> x
+        msg.left_hip[0]*horizontal_scale,    # x <-> y
+        msg.left_hip[1]*left_vertical_scale  # y <-> z
+    ]
+    newMsg.right_hip = [
+        msg.right_hip[2]*z_scale_factor,
+        msg.right_hip[0]*horizontal_scale,
+        msg.right_hip[1]*right_vertical_scale
+    ]
+    newMsg.right_shoulder = [
+        round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_shoulder[0]*horizontal_scale, 3),
+        round(msg.right_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_shoulder = [
+        round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_shoulder[0]*horizontal_scale, 3),
+        round(msg.left_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.right_wrist = [
+        round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_wrist[0]*horizontal_scale, 3),
+        round(msg.right_wrist[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_wrist = [
+        round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_wrist[0]*horizontal_scale, 3),
+        round(msg.left_wrist[1]*left_vertical_scale, 3)
+    ]
+    rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    return newMsg

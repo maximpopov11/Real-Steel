@@ -145,7 +145,6 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
-
     if not calibrating:
         # We don't want to publish if we're calibrating still
         pub.publish(preprocessed_msg)
@@ -609,14 +608,93 @@ def pubtest():
     a_pose_absolute.right_shoulder      = [.125,.27,0]
     a_pose_absolute.right_wrist         = [-.25, 0, 0]
 
-    pub.publish(t_pose_absolute)
+    zombie_pose_absolute = Landmarks()
+    zombie_pose_absolute.left_hip            = [-0.125,   0,  0]
+    zombie_pose_absolute.left_shoulder       = [-0.125, .27,  0]
+    zombie_pose_absolute.right_hip           = [  .125,   0,  0]
+    zombie_pose_absolute.right_shoulder      = [  .125, .27,  0]
+    zombie_pose_absolute.left_wrist          = [ 0.125, .28,  1.68]
+    zombie_pose_absolute.right_wrist         = [   -0.125, .28, 1.68]
+
+    t_pose_testing = Landmarks()
+    t_pose_testing.left_hip            = [38.08,-2.5,-0.01]
+    t_pose_testing.left_shoulder       = [80, 209.5,  0.1]
+    t_pose_testing.left_wrist          = [210, 240.5,  0.1]
+    t_pose_testing.right_hip           = [-38,   2.5,  0.013]
+    t_pose_testing.right_shoulder      = [-56,204.5,  0.183]
+    t_pose_testing.right_wrist         = [-277, 185.5,  .16]
+
+    t_pose_testing_2 = Landmarks()
+
+    t_pose_testing_2.left_hip            = [38.08,-2.5,-0.01]
+    t_pose_testing_2.left_shoulder       = [80, 209.5,  0.1]
+    t_pose_testing_2.left_wrist          = [211, 240.5,  -0.2]
+    t_pose_testing_2.right_hip           = [-38,   2.5,  0.013]
+    t_pose_testing_2.right_shoulder      = [-56,204.5,  0.183]
+    t_pose_testing_2.right_wrist         = [-211, 185.5,  -.2]
+
+    scaled = scale_to_robot(t_pose_testing)
+
+    pub.publish(scaled)
+
+FUDGE_FACTOR = 1
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
+ROBOT_SHOULDER_TO_HIP = .27
+
+def compute_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
+
+
+def scale_to_robot(msg):
+    right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
+    left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
+    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
+
+    horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
+    left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
+    z_scale_factor = 1.1
+
+    newMsg = Landmarks()
+    newMsg.left_hip = [
+        msg.left_hip[2]*z_scale_factor,
+        msg.left_hip[0]*horizontal_scale,
+        msg.left_hip[1]*left_vertical_scale
+    ]
+    newMsg.right_hip = [
+        msg.right_hip[2]*z_scale_factor,
+        msg.right_hip[0]*horizontal_scale,
+        msg.right_hip[1]*right_vertical_scale
+    ]
+    newMsg.right_shoulder = [
+        round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_shoulder[0]*horizontal_scale, 3),
+        round(msg.right_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_shoulder = [
+        round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_shoulder[0]*horizontal_scale, 3),
+        round(msg.left_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.right_wrist = [
+        round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_wrist[0]*horizontal_scale, 3),
+        round(msg.right_wrist[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_wrist = [
+        round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_wrist[0]*horizontal_scale, 3),
+        round(msg.left_wrist[1]*left_vertical_scale, 3)
+    ]
+    rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    return newMsg
 
 
 def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
     rospy.init_node('preprocessing', anonymous=True)
-    #pubtest()
-    rospy.spin()
+    pubtest()
 
 
 if __name__ == '__main__':
