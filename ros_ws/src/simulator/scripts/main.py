@@ -65,9 +65,6 @@ def app():
             # sync viewer to display updated sim
             viewer.sync()
 
-            # sleep maintaining rate
-            rate.sleep()
-
         rospy.signal_shutdown("Simulation Exiting")
 
 if __name__ == '__main__':
