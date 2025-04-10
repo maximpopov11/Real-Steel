@@ -159,6 +159,7 @@ catkin_install_python(PROGRAMS
   scripts/main.py
   scripts/preprocessed.py
   scripts/raw.py
+  scripts/scaled.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
