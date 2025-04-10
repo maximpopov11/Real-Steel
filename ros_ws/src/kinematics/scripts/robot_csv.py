@@ -54,22 +54,21 @@ class CsvWriterNode:
             rospy.loginfo(f"Recorded initial angles at {timestamp}")
             return
 
-        # Calculate Euclidean distance between current and last angles
-        distance = 0.0
-        for i in range(len(current_angles)):
-            diff = current_angles[i] - self.last_angles[i]
-            distance += diff ** 2
-        distance = math.sqrt(distance)
-
+        # Calculate angular speed for each joint (rad/s)
         time_diff = 0.1  # Fixed time step between callbacks
-        speed = distance / time_diff
+        speed_per_joint = [
+            abs(curr - last) / time_diff
+            for curr, last in zip(current_angles, self.last_angles)
+        ]
 
-        if speed > 0.5:
-            # Need to interpolate
-            required_time = distance / 0.5
-            num_steps = math.ceil(required_time / time_diff)
-            rospy.loginfo(f"Speed {speed:.2f} m/s exceeds threshold. Interpolating {num_steps} steps.")
-            interpolated = self.interpolate_points(self.last_angles, current_angles, num_steps)
+        # Find the maximum speed across all joints
+        max_speed = max(speed_per_joint)
+
+        if max_speed > 34.0:  # Threshold is 34 rad/s
+            # Calculate required steps to stay under 34 rad/s
+            required_steps = math.ceil(max_speed / 34.0)
+            rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
+            interpolated = self.interpolate_points(self.last_angles, current_angles, required_steps)
             for angles in interpolated:
                 left = angles[:5]
                 right = angles[5:]
@@ -87,10 +86,9 @@ class CsvWriterNode:
             rospy.loginfo(f"Recorded angles at {timestamp}")
             self.time_count += 0.1
             self.last_angles = current_angles
-
-    def shutdown_hook(self):
-        self.file.close()
-        rospy.loginfo(f"CSV file '{self.output_filename}' closed.")
+        def shutdown_hook(self):
+            self.file.close()
+            rospy.loginfo(f"CSV file '{self.output_filename}' closed.")
 
 def main():
     rospy.init_node('robot_csv')
