@@ -213,6 +213,11 @@ def process_bodypoints(msg):
         frames.pop()  # Remove the frame we just added
         return
     found_missing_points_ts = int(time() * 1000)
+
+    # Sometimes after we interpolate points, our hands will be flying off into the distance.
+    # Let's cap the maximum distance from the hand to the shoulder and bring it back.
+    if not calibrating:
+        _cap_hand_distances(frames[current_index], left_arm_length, right_arm_length)
     
     _smooth_points(current_index)
     smoothed_points_ts = int(time() * 1000)
@@ -518,6 +523,141 @@ def _find_missing_points(frame_index: int):
     
     # Update the frame with our interpolated points
     current_frame.bodypoints = current_points
+
+
+def _cap_hand_distances(current_frame, max_left_length, max_right_length):
+        """
+        Cap the maximum distance of hands from shoulders to the arm length.
+        If a hand is beyond the max arm length, pull it back along the vector to the shoulder.
+        
+        Args:
+            current_frame: The frame containing the bodypoints
+            max_left_length: Maximum allowed distance for left arm
+            max_right_length: Maximum allowed distance for right arm
+        """
+        # Process left hand if it exists
+        if current_frame.bodypoints[2] and current_frame.bodypoints[4]:  # Left shoulder and left wrist
+            shoulder = current_frame.bodypoints[2]
+            wrist = current_frame.bodypoints[4]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_left_length:
+                scale_factor = max_left_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped left hand distance from {distance:.2f} to {max_left_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[5]:  # Left pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[5][0] - wrist[0],
+                        current_frame.bodypoints[5][1] - wrist[1],
+                        current_frame.bodypoints[5][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[5] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[6]:  # Left index
+                    index_offset = [
+                        current_frame.bodypoints[6][0] - wrist[0],
+                        current_frame.bodypoints[6][1] - wrist[1],
+                        current_frame.bodypoints[6][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[6] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[7]:  # Left thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[7][0] - wrist[0],
+                        current_frame.bodypoints[7][1] - wrist[1],
+                        current_frame.bodypoints[7][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[7] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[4] = new_wrist
+        
+        # Process right hand if it exists
+        if current_frame.bodypoints[9] and current_frame.bodypoints[11]:  # Right shoulder and right wrist
+            shoulder = current_frame.bodypoints[9]
+            wrist = current_frame.bodypoints[11]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_right_length:
+                scale_factor = max_right_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped right hand distance from {distance:.2f} to {max_right_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[12]:  # Right pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[12][0] - wrist[0],
+                        current_frame.bodypoints[12][1] - wrist[1],
+                        current_frame.bodypoints[12][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[12] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[13]:  # Right index
+                    index_offset = [
+                        current_frame.bodypoints[13][0] - wrist[0],
+                        current_frame.bodypoints[13][1] - wrist[1],
+                        current_frame.bodypoints[13][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[13] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[14]:  # Right thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[14][0] - wrist[0],
+                        current_frame.bodypoints[14][1] - wrist[1],
+                        current_frame.bodypoints[14][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[14] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[11] = new_wrist
 
 
 def _smooth_points(frame_index: int):
