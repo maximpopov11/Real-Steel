@@ -494,6 +494,9 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
     pass
 
+def compute_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
+
 def pubtest():
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = [0,0,0]
@@ -514,6 +517,10 @@ def pubtest():
     preprocessed_msg.timestamp      = int(time() * 1000)
     preprocessed_pub.publish(preprocessed_msg)
 
+FUDGE_FACTOR = 0.7
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
+ROBOT_SHOULDER_TO_HIP = .27
+
 def scale_to_robot(msg):
     right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
     left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
@@ -525,10 +532,10 @@ def scale_to_robot(msg):
     z_scale_factor = 1.1
 
     newMsg = Landmarks()
-    newMsg.left_hip = [
-        msg.left_hip[2]*z_scale_factor,
-        msg.left_hip[0]*horizontal_scale,
-        msg.left_hip[1]*left_vertical_scale
+    newMsg.left_hip = [                      # camera coords <-> robot coords
+        msg.left_hip[2]*z_scale_factor,      # z <-> x
+        msg.left_hip[0]*horizontal_scale,    # x <-> y
+        msg.left_hip[1]*left_vertical_scale  # y <-> z
     ]
     newMsg.right_hip = [
         msg.right_hip[2]*z_scale_factor,

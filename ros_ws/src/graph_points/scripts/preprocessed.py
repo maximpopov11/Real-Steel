@@ -21,7 +21,7 @@ list_of_x_coord, list_of_y_coord, list_of_z_coord = [], [], []
 
 
 def plotting_callback(msg):
-    global instants_received, list_of_z_coord_lists, list_of_x_coord_lists, list_of_y_coord_lists
+    global instants_received, list_of_z_coord, list_of_x_coord, list_of_y_coord
     # Set the moment we got these for the while loop later to use
     instants_received = time.time()
     # Extract x, y, z coords into arrays for matplotlib to graph
