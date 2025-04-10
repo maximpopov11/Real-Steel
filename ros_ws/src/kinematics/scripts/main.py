@@ -7,9 +7,6 @@ from moveit_commander.conversions import pose_to_list
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionIKResponse
 
 pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
-moveit_commander.roscpp_initialize(sys.argv)
-robot = moveit_commander.RobotCommander()
-scene = moveit_commander.PlanningSceneInterface()
 compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
 FUDGE_FACTOR = 0.7
