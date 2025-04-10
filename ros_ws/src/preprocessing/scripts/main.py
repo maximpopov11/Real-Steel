@@ -1,6 +1,7 @@
 from custom_msg.msg import Landmarks
 from dataclasses import dataclass
 from time import time
+from time import time
 from typing import List, Optional, Tuple
 import bisect
 import math
@@ -8,7 +9,7 @@ import rospy
 import statistics
 
 
-first_timstamp: int = None
+first_timestamp: int = None
 # Calibration period in seconds
 CALIBRATION_TIME = 10
 # Setup margin period in seconds prior to calibration included in CALIBRATION_TIME
@@ -43,7 +44,7 @@ def process_bodypoints(msg):
     Returns:
         None. Angle results are published to ROS.
     """
-    global first_timstamp
+    global first_timestamp
     global left_arm_length
     global right_arm_length
 
@@ -53,13 +54,13 @@ def process_bodypoints(msg):
     timestamp = landmarks.timestamp
 
     # Initialize first timestamp if not set
-    if first_timstamp is None:
-        first_timstamp = timestamp
+    if first_timestamp is None:
+        first_timestamp = timestamp
         rospy.loginfo(f"Starting calibration period of {CALIBRATION_TIME} seconds. Will begin calibrating in {SETUP_MARGIN_TIME} seconds. Please T-Pose.")
     
     # When calibrating we won't publish results, but we'll still grab frames to have past data to work from in the future
     calibrating = False
-    time_elapsed = (timestamp - first_timstamp) / 1000  # Convert to seconds
+    time_elapsed = (timestamp - first_timestamp) / 1000  # Convert to seconds
     if time_elapsed < CALIBRATION_TIME:
         calibrating = True
 
