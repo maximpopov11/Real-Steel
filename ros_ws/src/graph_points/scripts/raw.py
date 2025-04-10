@@ -16,14 +16,14 @@ fig.canvas.mpl_connect('close_event', on_close)
 ax = fig.add_subplot(111, projection="3d")
 ax.view_init(elev=90, azim=90, roll=180)  # Top-down view looking at the XY plane
 
-instants_received = [0, 0]
+instants_received = 0
 list_of_x_coord, list_of_y_coord, list_of_z_coord = [], [], []
 
 
 def get_plotting_callback(msg):
     global instants_received, list_of_z_coord_lists, list_of_x_coord_lists, list_of_y_coord_lists
     # Set the moment we got these for the while loop later to use
-    instants_received[points_idx] = time.time()
+    instants_received = time.time()
     # Extract x, y, z coords into arrays for matplotlib to graph
     list_of_x_coord = [
         msg.left_hip[0],
@@ -97,7 +97,7 @@ def app():
         plt.pause(0.001)  
 
         # If the last frame was more than a tenth of a second ago, skip redrawing it
-        if time.time() - instants_received[0] > .1 and time.time() - instants_received[1] > .1:
+        if time.time() - instants_received > .1 and time.time() - instants_received[1] > .1:
             continue
 
         ax.clear()
@@ -105,9 +105,9 @@ def app():
 
     print("exited loop")
     
+
 if __name__ == '__main__':
     try:
         app()
     except rospy.ROSInterruptException:
         pass
-
