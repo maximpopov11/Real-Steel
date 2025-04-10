@@ -654,14 +654,15 @@ def compute_distance(p1, p2):
 FUDGE_FACTOR = 1
 ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
+ROBOT_ARM_LENGTH = 0.43
 
 
 def scale_to_robot(msg):
     right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
     left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
-    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
-    horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    left_horizontal_scale = ROBOT_ARM_LENGTH / left_arm_length
+    right_horizontal_scale = ROBOT_ARM_LENGTH / right_arm_length
     right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
     z_scale_factor = 1.1
@@ -669,34 +670,34 @@ def scale_to_robot(msg):
     newMsg = Landmarks()
     newMsg.left_hip = [                      # camera coords <-> robot coords
         msg.left_hip[2]*z_scale_factor,      # z <-> x
-        msg.left_hip[0]*horizontal_scale,    # x <-> y
+        msg.left_hip[0]*left_horizontal_scale,    # x <-> y
         msg.left_hip[1]*left_vertical_scale  # y <-> z
     ]
     newMsg.right_hip = [
         msg.right_hip[2]*z_scale_factor,
-        msg.right_hip[0]*horizontal_scale,
+        msg.right_hip[0]*right_horizontal_scale,
         msg.right_hip[1]*right_vertical_scale
     ]
     newMsg.right_shoulder = [
         round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.right_shoulder[0]*horizontal_scale, 3),
+        round(msg.right_shoulder[0]*right_horizontal_scale, 3),
         round(msg.right_shoulder[1]*right_vertical_scale, 3)
     ]
     newMsg.left_shoulder = [
         round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.left_shoulder[0]*horizontal_scale, 3),
+        round(msg.left_shoulder[0]*left_horizontal_scale, 3),
         round(msg.left_shoulder[1]*right_vertical_scale, 3)
     ]
     newMsg.right_wrist = [
         round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.right_wrist[0]*horizontal_scale, 3),
+        round(msg.right_wrist[0]*right_horizontal_scale, 3),
         round(msg.right_wrist[1]*right_vertical_scale, 3)
     ]
     newMsg.left_wrist = [
         round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.left_wrist[0]*horizontal_scale, 3),
+        round(msg.left_wrist[0]*left_horizontal_scale, 3),
         round(msg.left_wrist[1]*left_vertical_scale, 3)
     ]
-    rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
-    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    # rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
     return newMsg
