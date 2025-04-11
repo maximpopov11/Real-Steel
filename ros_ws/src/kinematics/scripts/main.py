@@ -80,7 +80,7 @@ def generate_angles(msg):
 
 
 def app():
-    sub = rospy.Subscriber('preprocessed', Landmarks, generate_angles)
+    sub = rospy.Subscriber('scaled', Landmarks, generate_angles)
     rospy.init_node('kinematics', anonymous=False)
 
     rospy.spin()

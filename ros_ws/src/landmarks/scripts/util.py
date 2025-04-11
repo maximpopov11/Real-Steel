@@ -816,7 +816,7 @@ def compute_distance(p1, p2):
 FUDGE_FACTOR = 1
 ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
-ROBOT_ARM_LENGTH = 0.43
+ROBOT_ARM_LENGTH = 0.3
 
 
 def scale_to_robot(msg):
@@ -827,7 +827,7 @@ def scale_to_robot(msg):
     right_horizontal_scale = ROBOT_ARM_LENGTH / right_arm_length
     right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
-    z_scale_factor = 1.1
+    z_scale_factor = -1.1
 
     newMsg = Landmarks()
     newMsg.left_hip = [                      # camera coords <-> robot coords

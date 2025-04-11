@@ -34,13 +34,6 @@ def plotting_callback(msg):
         msg.right_elbow[0],
         msg.left_wrist[0],
         msg.right_wrist[0],
-        msg.left_pinky[0],
-        msg.right_pinky[0],
-        msg.left_index[0],
-        msg.right_index[0],
-        msg.left_thumb[0],
-        msg.right_thumb[0],
-        msg.nose[0]
     ]
     list_of_y_coord = [
         msg.left_hip[1],
@@ -51,13 +44,6 @@ def plotting_callback(msg):
         msg.right_elbow[1],
         msg.left_wrist[1],
         msg.right_wrist[1],
-        msg.left_pinky[1],
-        msg.right_pinky[1],
-        msg.left_index[1],
-        msg.right_index[1],
-        msg.left_thumb[1],
-        msg.right_thumb[1],
-        msg.nose[1]
     ]
     list_of_z_coord = [
         msg.left_hip[2],
@@ -68,21 +54,14 @@ def plotting_callback(msg):
         msg.right_elbow[2],
         msg.left_wrist[2],
         msg.right_wrist[2],
-        msg.left_pinky[2],
-        msg.right_pinky[2],
-        msg.left_index[2],
-        msg.right_index[2],
-        msg.left_thumb[2],
-        msg.right_thumb[2],
-        msg.nose[2]
-    ]
+   ]
     return 
 
 
 def app():
     sub = rospy.Subscriber('landmarks', Landmarks, plotting_callback)
     rospy.init_node('POSE_Display_Raw_Landmarks', anonymous=True)
-    all_orange_colors = ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange']
+    all_orange_colors = ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange']
     while not rospy.is_shutdown():
         ax.set_xlim([0, 640])
         ax.set_ylim([0, 480])
@@ -90,7 +69,7 @@ def app():
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")
         ax.set_zlabel("Z (Forward/Backward)")
-        ax.set_box_aspect([4, 3, 1])
+        ax.set_box_aspect([4, 3, 2])
 
         plt.draw()
 
