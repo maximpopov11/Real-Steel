@@ -827,7 +827,7 @@ def scale_to_robot(msg):
     right_horizontal_scale = ROBOT_ARM_LENGTH / right_arm_length
     right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
-    z_scale_factor = 1.1
+    z_scale_factor = -1.1
 
     newMsg = Landmarks()
     newMsg.left_hip = [                      # camera coords <-> robot coords
