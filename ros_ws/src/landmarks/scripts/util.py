@@ -816,7 +816,7 @@ def compute_distance(p1, p2):
 FUDGE_FACTOR = 1
 ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
 ROBOT_SHOULDER_TO_HIP = .27
-ROBOT_ARM_LENGTH = 0.43
+ROBOT_ARM_LENGTH = 0.3
 
 
 def scale_to_robot(msg):
