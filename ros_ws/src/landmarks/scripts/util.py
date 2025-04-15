@@ -78,13 +78,27 @@ Everything below this comment is for preprocessing
 '''
 from custom_msg.msg import Landmarks
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
-import rospy
 from time import time
+from typing import List, Optional, Tuple
+import bisect
+import math
+import rospy
+import statistics
+
+
+# Initialize first_timestamp as None
+first_timestamp = None
+# Calibration period in seconds
+CALIBRATION_TIME = 10
+# Setup margin period in seconds prior to calibration included in CALIBRATION_TIME
+SETUP_MARGIN_TIME = 5
+
+left_arm_length: float = None
+right_arm_length: float = None
 
 @dataclass
 class Frame:
-    """Class to store all data related to a single frame"""
+    """Class to store all data related to a single frame."""
     timestamp: float
     bodypoints: Optional[List[List[float]]] = None
     robot_angles: Optional[List[float]] = None
@@ -94,12 +108,14 @@ class Frame:
 frames: List[Frame] = []
 
 preprocessed_pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+scaled_pub = rospy.Publisher('scaled', Landmarks, queue_size=10)
 
 
 def process_bodypoints(msg):
     """
     Subscribe to a ROS topic to receive bodypoints.
     Frame data should come in by strictly increasing timestamp.
+    The first 10 seconds are given to calibration without any angle pubishing.
 
     Args:
         msg: ROS message in the form of msg.Landmarks
@@ -107,10 +123,63 @@ def process_bodypoints(msg):
     Returns:
         None. Angle results are published to ROS.
     """
+    global first_timestamp
+    global left_arm_length
+    global right_arm_length
+
     begin_ts = int(time() * 1000)
     # Parse msg
     landmarks = msg
     timestamp = landmarks.timestamp
+
+    # Initialize first timestamp if not set
+    if first_timestamp is None:
+        first_timestamp = timestamp
+        rospy.loginfo(f"Starting calibration period of {CALIBRATION_TIME} seconds. Will begin calibrating in {SETUP_MARGIN_TIME} seconds. Please T-Pose.")
+    
+    # When calibrating we won't publish results, but we'll still grab frames to have past data to work from in the future
+    calibrating = False
+    time_elapsed = (timestamp - first_timestamp) / 1000  # Convert to seconds
+    if time_elapsed < CALIBRATION_TIME:
+        calibrating = True
+
+        if time_elapsed > SETUP_MARGIN_TIME:
+            # We've given time to get in position
+            # We're in the calibration period, run calibration before normal processing (without publishing results)
+            _calibrate(msg)
+
+    # If this is the first frame we're done calibrating for lets set our arm length values
+    if not calibrating:
+        if not left_arm_length:
+            left_arm_length = _get_left_arm_length()
+            rospy.loginfo(f"Left arm length = {left_arm_length}")
+        if not right_arm_length:
+            right_arm_length = _get_right_arm_length()
+            rospy.loginfo(f"Right arm length = {right_arm_length}")
+
+    # Sometimes Mediapipe gives our hands way too far away from our shoulders, let's drop these points
+    # Check if hands are too far from shoulders and drop them if they exceed a reasonable distance
+    MAX_ARM_LENGTH_FACTOR = 1.1  # Maximum allowed distance as a factor of expected arm length
+    
+    # Calculate distances from shoulders to hands
+    if landmarks.left_shoulder and landmarks.left_wrist and left_arm_length:
+        left_dist = compute_distance(landmarks.left_shoulder, landmarks.left_wrist)
+        if left_dist > MAX_ARM_LENGTH_FACTOR * left_arm_length:
+            rospy.logwarn(f"Left hand too far from shoulder ({left_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * left_arm_length:.2f}), dropping point")
+            landmarks.left_wrist = [None, None, None]
+            landmarks.left_pinky = [None, None, None]
+            landmarks.left_index = [None, None, None]
+            landmarks.left_thumb = [None, None, None]
+    
+    if landmarks.right_shoulder and landmarks.right_wrist and right_arm_length:
+        right_dist = compute_distance(landmarks.right_shoulder, landmarks.right_wrist)
+        if right_dist > MAX_ARM_LENGTH_FACTOR * right_arm_length:
+            rospy.logwarn(f"Right hand too far from shoulder ({right_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * right_arm_length:.2f}), dropping point")
+            landmarks.right_wrist = [None, None, None]
+            landmarks.right_pinky = [None, None, None]
+            landmarks.right_index = [None, None, None]
+            landmarks.right_thumb = [None, None, None]
+
     bodypoints = [
         [x for x in landmarks.nose],
         [x for x in landmarks.left_hip],
@@ -144,22 +213,16 @@ def process_bodypoints(msg):
         frames.pop()  # Remove the frame we just added
         return
     found_missing_points_ts = int(time() * 1000)
+
+    # Sometimes after we interpolate points, our hands will be flying off into the distance.
+    # Let's cap the maximum distance from the hand to the shoulder and bring it back.
+    if not calibrating:
+        _cap_hand_distances(frames[current_index], left_arm_length, right_arm_length)
     
-#    _smooth_points(current_index)
     _smooth_points(current_index)
     smoothed_points_ts = int(time() * 1000)
 
     _translate_points(current_index)
-
-    
-    # Calculate robot angles based on the (now processed) bodypoints
-    #_get_robotangles(current_index)
-    #_restrain_angles(current_index)
-
-    #_restrain_position(current_index)
-    #_restrain_speed(current_index)
-    
-    #_get_robotangles_from_robot_bodypoints(current_index)
 
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = current_frame.bodypoints[0]
@@ -178,19 +241,121 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
-    preprocessed_pub.publish(preprocessed_msg)
-    published_ts = int(time() * 1000)
-    rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+
+    if not calibrating:
+        # We don't want to publish if we're calibrating still
+        preprocessed_pub.publish(preprocessed_msg)
+        published_ts = int(time() * 1000)
+        rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+
+        scaled_msg = scale_to_robot(preprocessed_msg)
+        scaled_pub.publish(scaled_msg)
+
+
+# A sorted list of calculated arm lengths from frames
+_left_arm_lengths: List[float] = []
+_right_arm_lengths: List[float] = []
+
+
+def _get_left_arm_length() -> float:
+    """
+    Get the maximum found left arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    return _get_arm_length(_left_arm_lengths)
+
+
+def _get_right_arm_length() -> float:
+    """
+    Get the maximum found right arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    return _get_arm_length(_right_arm_lengths)
+
+
+def _get_arm_length(sorted_lengths: List[float]) -> float:
+    """
+    Get the maximum found arm length excluding outliers expected to be caused by camera or mediapipe innacuracy.
+    """
+
+    if not sorted_lengths:
+        return 0.0
+
+    if len(sorted_lengths) < 4:
+        # If not enough data to meaningfully detect outliers, return max
+        return sorted_lengths[-1]
+
+    # Sort the lengths to compute quartiles
+    q1 = statistics.quantiles(sorted_lengths, n=4)[0]  # 25th percentile
+    q3 = statistics.quantiles(sorted_lengths, n=4)[2]  # 75th percentile
+    iqr = q3 - q1
+
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+
+    # Filter out outliers
+    filtered = [l for l in sorted_lengths if lower_bound <= l <= upper_bound]
+
+    if not filtered:
+        return sorted_lengths[-1]  # fallback if everything was removed
+
+    return sorted_lengths[-1]
+
+
+def _calibrate(msg):
+    """
+    Perform calibration to obtain arm lengths.
     
-    # publish robot angles
-    #angles_msg = Angles()
-    #current_frame = frames[current_index]
-    #angles_msg.left_arm = current_frame.robot_angles[0]
-    #angles_msg.right_arm = current_frame.robot_angles[1]
-    #pub.publish(angles_msg)
+    Args:
+        bodypoints: The bodypoints from the current frame
+        timestamp: The timestamp of the current frame
+        
+    Returns:
+        None. Calibration data is stored internally.
+    """
+
+    left_points = [msg.left_shoulder, msg.left_elbow, msg.left_wrist]
+    right_points = [msg.right_shoulder, msg.right_elbow, msg.right_wrist]
+
+    # Check if any points do not exist or have invalid values
+    for points in [left_points, right_points]:
+        for point in points:
+            # Check if point is None, empty, or contains None values
+            if point is None or len(point) < 3 or None in point:
+                return
+            
+            # Also check for zero values in all coordinates (likely invalid data)
+            if all(v == 0 for v in point):
+                return
+
+    left_length = _get_length(left_points)
+    right_length = _get_length(right_points)
+
+    bisect.insort(_left_arm_lengths, left_length)
+    bisect.insort(_right_arm_lengths, right_length)
 
 
-# TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
+def _get_length(points: List[List[float]]) -> float:
+    """
+    Get the length of the ordered set of 3D points.
+    """
+
+    if len(points) < 2:
+        return 0.0
+
+    total_length = 0.0
+    for i in range(1, len(points)):
+        p1, p2 = points[i - 1], points[i]
+        distance = math.sqrt(
+            (p2[0] - p1[0]) ** 2 +
+            (p2[1] - p1[1]) ** 2 +
+            (p2[2] - p1[2]) ** 2
+        )
+        total_length += distance
+
+    return total_length
+
+
 def _drop_bad_points(frame_index: int):
     """
     Drop any points at the specified frame index whose values are incorrect.
@@ -360,6 +525,141 @@ def _find_missing_points(frame_index: int):
     current_frame.bodypoints = current_points
 
 
+def _cap_hand_distances(current_frame, max_left_length, max_right_length):
+        """
+        Cap the maximum distance of hands from shoulders to the arm length.
+        If a hand is beyond the max arm length, pull it back along the vector to the shoulder.
+        
+        Args:
+            current_frame: The frame containing the bodypoints
+            max_left_length: Maximum allowed distance for left arm
+            max_right_length: Maximum allowed distance for right arm
+        """
+        # Process left hand if it exists
+        if current_frame.bodypoints[2] and current_frame.bodypoints[4]:  # Left shoulder and left wrist
+            shoulder = current_frame.bodypoints[2]
+            wrist = current_frame.bodypoints[4]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_left_length:
+                scale_factor = max_left_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped left hand distance from {distance:.2f} to {max_left_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[5]:  # Left pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[5][0] - wrist[0],
+                        current_frame.bodypoints[5][1] - wrist[1],
+                        current_frame.bodypoints[5][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[5] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[6]:  # Left index
+                    index_offset = [
+                        current_frame.bodypoints[6][0] - wrist[0],
+                        current_frame.bodypoints[6][1] - wrist[1],
+                        current_frame.bodypoints[6][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[6] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[7]:  # Left thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[7][0] - wrist[0],
+                        current_frame.bodypoints[7][1] - wrist[1],
+                        current_frame.bodypoints[7][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[7] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[4] = new_wrist
+        
+        # Process right hand if it exists
+        if current_frame.bodypoints[9] and current_frame.bodypoints[11]:  # Right shoulder and right wrist
+            shoulder = current_frame.bodypoints[9]
+            wrist = current_frame.bodypoints[11]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_right_length:
+                scale_factor = max_right_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped right hand distance from {distance:.2f} to {max_right_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[12]:  # Right pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[12][0] - wrist[0],
+                        current_frame.bodypoints[12][1] - wrist[1],
+                        current_frame.bodypoints[12][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[12] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[13]:  # Right index
+                    index_offset = [
+                        current_frame.bodypoints[13][0] - wrist[0],
+                        current_frame.bodypoints[13][1] - wrist[1],
+                        current_frame.bodypoints[13][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[13] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[14]:  # Right thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[14][0] - wrist[0],
+                        current_frame.bodypoints[14][1] - wrist[1],
+                        current_frame.bodypoints[14][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[14] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[11] = new_wrist
+
+
 def _smooth_points(frame_index: int):
     """
     Smoothen points at the specified frame by using surrounding frames, reducing noise and jitter.
@@ -508,36 +808,58 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
     pass
 
-def pubtest():
-    preprocessed_msg = Landmarks()
-    preprocessed_msg.nose           = [0,0,0]
-    preprocessed_msg.left_hip       = [-45,0,0]
-    preprocessed_msg.left_shoulder  = [0,0,0]
-    preprocessed_msg.left_elbow     = [0,0,0]
-    preprocessed_msg.left_wrist     = [80, 20, 1]
-    preprocessed_msg.left_pinky     = [0,0,0]
-    preprocessed_msg.left_index     = [0,0,0]
-    preprocessed_msg.left_thumb     = [0,0,0]
-    preprocessed_msg.right_hip      = [45,0,0]
-    preprocessed_msg.right_shoulder = [0,0,0]
-    preprocessed_msg.right_elbow    = [0,0,0]
-    preprocessed_msg.right_wrist    = [-80, 20, 1]
-    preprocessed_msg.right_pinky    = [0,0,0]
-    preprocessed_msg.right_index    = [0,0,0]
-    preprocessed_msg.right_thumb    = [0,0,0]
-    preprocessed_msg.timestamp      = int(time() * 1000)
-    preprocessed_pub.publish(preprocessed_msg)
+
+def compute_distance(p1, p2):
+    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
 
 
-# def app():
-#     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
-#     rospy.init_node('preprocessing', anonymous=True)
-#     #pubtest()
-#     rospy.spin()
+FUDGE_FACTOR = 1
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
+ROBOT_SHOULDER_TO_HIP = .27
+ROBOT_ARM_LENGTH = 0.3
 
 
-# if __name__ == '__main__':
-#     try:
-#         app()
-#     except rospy.ROSInterruptException:
-#         pass 
+def scale_to_robot(msg):
+    right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
+    left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
+
+    left_horizontal_scale = ROBOT_ARM_LENGTH / left_arm_length
+    right_horizontal_scale = ROBOT_ARM_LENGTH / right_arm_length
+    right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
+    left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
+    z_scale_factor = -1.1
+
+    newMsg = Landmarks()
+    newMsg.left_hip = [                      # camera coords <-> robot coords
+        msg.left_hip[2]*z_scale_factor,      # z <-> x
+        msg.left_hip[0]*left_horizontal_scale,    # x <-> y
+        msg.left_hip[1]*left_vertical_scale  # y <-> z
+    ]
+    newMsg.right_hip = [
+        msg.right_hip[2]*z_scale_factor,
+        msg.right_hip[0]*right_horizontal_scale,
+        msg.right_hip[1]*right_vertical_scale
+    ]
+    newMsg.right_shoulder = [
+        round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_shoulder[0]*right_horizontal_scale, 3),
+        round(msg.right_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_shoulder = [
+        round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_shoulder[0]*left_horizontal_scale, 3),
+        round(msg.left_shoulder[1]*right_vertical_scale, 3)
+    ]
+    newMsg.right_wrist = [
+        round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_wrist[0]*right_horizontal_scale, 3),
+        round(msg.right_wrist[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_wrist = [
+        round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_wrist[0]*left_horizontal_scale, 3),
+        round(msg.left_wrist[1]*left_vertical_scale, 3)
+    ]
+    # rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    return newMsg

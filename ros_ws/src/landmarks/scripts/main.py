@@ -70,7 +70,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
 
         z_coord = depth_frame.get_distance(x_coord, y_coord)
         landmarks_with_depth.append((x_coord, CAMERA_HEIGHT - y_coord, z_coord))
-        rospy.loginfo(f"Pose detection took {timestamp() - timestamp_ms}ms!")
+        #rospy.loginfo(f"Pose detection took {timestamp() - timestamp_ms}ms!")
 
     msg = Landmarks()
     msg.left_hip        = landmarks_with_depth[0]
@@ -96,6 +96,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
 
     if PUBLISH_PREPROCESSED_POINTS:
         process_bodypoints(msg)
+
 
 def run():
     rospy.init_node('landmarks', anonymous=True)

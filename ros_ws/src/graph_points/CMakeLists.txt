@@ -157,6 +157,9 @@ include_directories(
 # in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/main.py
+  scripts/preprocessed.py
+  scripts/raw.py
+  scripts/scaled.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

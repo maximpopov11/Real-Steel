@@ -810,14 +810,20 @@
             <inertia ixx="0.00010099485234748" ixy="0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0.07 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://g1_moveit_config/meshes/left_rubber_hand.STL" />
+                <sphere radius="0.07" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
+        <collision>
+            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.07" />
+            </geometry>
+        </collision>
     </link>
     <link name="right_shoulder_pitch_link">
         <inertial>
@@ -1034,14 +1040,20 @@
             <inertia ixx="0.00010099485234748" ixy="-0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="-0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0.07 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://g1_moveit_config/meshes/right_rubber_hand.STL" />
+                <sphere radius="0.07" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
+        <collision>
+            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.07" />
+            </geometry>
+        </collision>
     </link>
     <transmission name="trans_left_hip_pitch_joint">
         <type>transmission_interface/SimpleTransmission</type>
