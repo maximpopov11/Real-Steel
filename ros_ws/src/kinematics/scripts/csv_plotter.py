@@ -70,7 +70,7 @@ class JointAnglePlotter:
             delta_t = times[i] - times[i-1]
             if delta_t <= 0:
                 continue
-            speed = (values[i] - values[i-1]) / delta_t
+            speed = (values[i] - values[i-1]) / delta_t #speed / time
             speeds.append(speed)
             speed_times.append(times[i])
 
