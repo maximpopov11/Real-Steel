@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Need to get speed between angles. Don't need distance.
-"""
+
 import rospy
 import csv
 import math
