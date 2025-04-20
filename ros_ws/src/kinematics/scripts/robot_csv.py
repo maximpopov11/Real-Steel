@@ -31,8 +31,6 @@ class CsvWriterNode:
         headers = ['timestamp']
         headers += left_arm_joint_names
         headers += right_arm_joint_names
-        # headers += [f'left_joint_{i}' for i in range(5)]
-        # headers += [f'right_joint_{i}' for i in range(5)]
         self.writer.writerow(headers)
         rospy.loginfo(f"CSV file '{self.output_filename}' created with headers.")
         
