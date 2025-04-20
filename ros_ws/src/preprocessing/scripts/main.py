@@ -1,3 +1,7 @@
+
+'''
+Everything below this comment is for preprocessing
+'''
 from custom_msg.msg import Landmarks
 from dataclasses import dataclass
 from time import time
@@ -29,7 +33,8 @@ class Frame:
 # List of frames ordered by timestamp
 frames: List[Frame] = []
 
-pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+preprocessed_pub = rospy.Publisher('preprocessed', Landmarks, queue_size=10)
+scaled_pub = rospy.Publisher('scaled', Landmarks, queue_size=10)
 
 
 def process_bodypoints(msg):
@@ -78,6 +83,29 @@ def process_bodypoints(msg):
             right_arm_length = _get_right_arm_length()
             rospy.loginfo(f"Right arm length = {right_arm_length}")
 
+    # Sometimes Mediapipe gives our hands way too far away from our shoulders, let's drop these points
+    # Check if hands are too far from shoulders and drop them if they exceed a reasonable distance
+    MAX_ARM_LENGTH_FACTOR = 1.1  # Maximum allowed distance as a factor of expected arm length
+    
+    # Calculate distances from shoulders to hands
+    if landmarks.left_shoulder and landmarks.left_wrist and left_arm_length:
+        left_dist = compute_distance(landmarks.left_shoulder, landmarks.left_wrist)
+        if left_dist > MAX_ARM_LENGTH_FACTOR * left_arm_length:
+            rospy.logwarn(f"Left hand too far from shoulder ({left_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * left_arm_length:.2f}), dropping point")
+            landmarks.left_wrist = [None, None, None]
+            landmarks.left_pinky = [None, None, None]
+            landmarks.left_index = [None, None, None]
+            landmarks.left_thumb = [None, None, None]
+    
+    if landmarks.right_shoulder and landmarks.right_wrist and right_arm_length:
+        right_dist = compute_distance(landmarks.right_shoulder, landmarks.right_wrist)
+        if right_dist > MAX_ARM_LENGTH_FACTOR * right_arm_length:
+            rospy.logwarn(f"Right hand too far from shoulder ({right_dist:.2f} > {MAX_ARM_LENGTH_FACTOR * right_arm_length:.2f}), dropping point")
+            landmarks.right_wrist = [None, None, None]
+            landmarks.right_pinky = [None, None, None]
+            landmarks.right_index = [None, None, None]
+            landmarks.right_thumb = [None, None, None]
+
     bodypoints = [
         [x for x in landmarks.nose],
         [x for x in landmarks.left_hip],
@@ -111,22 +139,18 @@ def process_bodypoints(msg):
         frames.pop()  # Remove the frame we just added
         return
     found_missing_points_ts = int(time() * 1000)
-    
-#    _smooth_points(current_index)
-    _smooth_points(current_index)
-    smoothed_points_ts = int(time() * 1000)
 
-    _translate_points(current_index)
 
-    
-    # Calculate robot angles based on the (now processed) bodypoints
-    #_get_robotangles(current_index)
-    #_restrain_angles(current_index)
+    # Sometimes after we interpolate points, our hands will be flying off into the distance.
+    # Let's cap the maximum distance from the hand to the shoulder and bring it back.
+    if not calibrating:
+        _cap_hand_distances(frames[current_index], left_arm_length, right_arm_length)
+        _smooth_points(current_index)
+        frames[current_index].bodypoints = _rolling_average(current_index, 5)
+        _rolling_average(current_index, 5)
+        smoothed_points_ts = int(time() * 1000)
 
-    #_restrain_position(current_index)
-    #_restrain_speed(current_index)
-    
-    #_get_robotangles_from_robot_bodypoints(current_index)
+        _translate_points(current_index)
 
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = current_frame.bodypoints[0]
@@ -145,18 +169,15 @@ def process_bodypoints(msg):
     preprocessed_msg.right_index    = current_frame.bodypoints[13]
     preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
     preprocessed_msg.timestamp      = current_frame.timestamp
+
     if not calibrating:
         # We don't want to publish if we're calibrating still
-        pub.publish(preprocessed_msg)
+        preprocessed_pub.publish(preprocessed_msg)
         published_ts = int(time() * 1000)
-        rospy.loginfo(f"({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
-    
-    # publish robot angles
-    #angles_msg = Angles()
-    #current_frame = frames[current_index]
-    #angles_msg.left_arm = current_frame.robot_angles[0]
-    #angles_msg.right_arm = current_frame.robot_angles[1]
-    #pub.publish(angles_msg)
+        rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+
+        scaled_msg = scale_to_robot(preprocessed_msg)
+        scaled_pub.publish(scaled_msg)
 
 
 # A sorted list of calculated arm lengths from frames
@@ -263,7 +284,6 @@ def _get_length(points: List[List[float]]) -> float:
     return total_length
 
 
-# TODO: if points look unstable, try dropping low-confidence mediapipe points to be replaced via interpolation
 def _drop_bad_points(frame_index: int):
     """
     Drop any points at the specified frame index whose values are incorrect.
@@ -433,6 +453,171 @@ def _find_missing_points(frame_index: int):
     current_frame.bodypoints = current_points
 
 
+def _cap_hand_distances(current_frame, max_left_length, max_right_length):
+        """
+        Cap the maximum distance of hands from shoulders to the arm length.
+        If a hand is beyond the max arm length, pull it back along the vector to the shoulder.
+        
+        Args:
+            current_frame: The frame containing the bodypoints
+            max_left_length: Maximum allowed distance for left arm
+            max_right_length: Maximum allowed distance for right arm
+        """
+        # Process left hand if it exists
+        if current_frame.bodypoints[2] and current_frame.bodypoints[4]:  # Left shoulder and left wrist
+            shoulder = current_frame.bodypoints[2]
+            wrist = current_frame.bodypoints[4]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_left_length:
+                scale_factor = max_left_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped left hand distance from {distance:.2f} to {max_left_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[5]:  # Left pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[5][0] - wrist[0],
+                        current_frame.bodypoints[5][1] - wrist[1],
+                        current_frame.bodypoints[5][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[5] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[6]:  # Left index
+                    index_offset = [
+                        current_frame.bodypoints[6][0] - wrist[0],
+                        current_frame.bodypoints[6][1] - wrist[1],
+                        current_frame.bodypoints[6][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[6] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[7]:  # Left thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[7][0] - wrist[0],
+                        current_frame.bodypoints[7][1] - wrist[1],
+                        current_frame.bodypoints[7][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[7] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[4] = new_wrist
+        
+        # Process right hand if it exists
+        if current_frame.bodypoints[9] and current_frame.bodypoints[11]:  # Right shoulder and right wrist
+            shoulder = current_frame.bodypoints[9]
+            wrist = current_frame.bodypoints[11]
+            
+            # Calculate current distance
+            dx = wrist[0] - shoulder[0]
+            dy = wrist[1] - shoulder[1]
+            dz = wrist[2] - shoulder[2]
+            distance = math.sqrt(dx**2 + dy**2 + dz**2)
+            
+            # If distance exceeds maximum, scale it back
+            if distance > max_right_length:
+                scale_factor = max_right_length / distance
+                # Calculate new position by scaling the vector from shoulder to wrist
+                new_wrist = [
+                    shoulder[0] + dx * scale_factor,
+                    shoulder[1] + dy * scale_factor,
+                    shoulder[2] + dz * scale_factor
+                ]
+                rospy.loginfo(f"Capped right hand distance from {distance:.2f} to {max_right_length:.2f}")
+                
+                # Update the wrist and hand points (maintaining relative positions)
+                if current_frame.bodypoints[12]:  # Right pinky
+                    pinky_offset = [
+                        current_frame.bodypoints[12][0] - wrist[0],
+                        current_frame.bodypoints[12][1] - wrist[1],
+                        current_frame.bodypoints[12][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[12] = [
+                        new_wrist[0] + pinky_offset[0],
+                        new_wrist[1] + pinky_offset[1],
+                        new_wrist[2] + pinky_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[13]:  # Right index
+                    index_offset = [
+                        current_frame.bodypoints[13][0] - wrist[0],
+                        current_frame.bodypoints[13][1] - wrist[1],
+                        current_frame.bodypoints[13][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[13] = [
+                        new_wrist[0] + index_offset[0],
+                        new_wrist[1] + index_offset[1],
+                        new_wrist[2] + index_offset[2]
+                    ]
+                
+                if current_frame.bodypoints[14]:  # Right thumb
+                    thumb_offset = [
+                        current_frame.bodypoints[14][0] - wrist[0],
+                        current_frame.bodypoints[14][1] - wrist[1],
+                        current_frame.bodypoints[14][2] - wrist[2]
+                    ]
+                    current_frame.bodypoints[14] = [
+                        new_wrist[0] + thumb_offset[0],
+                        new_wrist[1] + thumb_offset[1],
+                        new_wrist[2] + thumb_offset[2]
+                    ]
+                
+                # Update the wrist position
+                current_frame.bodypoints[11] = new_wrist
+
+
+def _rolling_average(cur_frame_idx: int, average_count: int) -> List[List[float]]:
+
+    if cur_frame_idx < average_count:
+        return frames[cur_frame_idx].bodypoints
+    
+    current_frame = frames[cur_frame_idx]
+
+    new_frame = Frame(current_frame.timestamp)
+
+    # project the last 5 frames to 
+    arr_of_bodypoints = [frames[i].bodypoints for i in range(cur_frame_idx-(average_count-1), cur_frame_idx+1)]
+    print(f"arr of bp {arr_of_bodypoints}")
+    new_frame.bodypoints = [[0, 0, 0] for i in range(0, len(current_frame.bodypoints))]
+    for bp_idx in range(0, len(current_frame.bodypoints)):
+        # for our new frame, at the bodypoints index, project the values across the last 5 frames into their own array
+        projected_bp_for_index = [bodypoints[bp_idx] for bodypoints in arr_of_bodypoints]
+
+        # average and assign them back into the new frame    
+        new_frame.bodypoints[bp_idx][0] = sum([point[0] for point in projected_bp_for_index]) / average_count
+        new_frame.bodypoints[bp_idx][1] = sum([point[1] for point in projected_bp_for_index]) / average_count
+        new_frame.bodypoints[bp_idx][2] = sum([point[2] for point in projected_bp_for_index]) / average_count
+
+        # Debug statements
+        print(f"cur_frame: {cur_frame_idx} | averaging bp {bp_idx} X : {[point[0] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][0]}")
+        print(f"                                     Y : {[point[1] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][1]}")
+        print(f"                                     Z : {[point[2] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][2]}")
+
+    return new_frame.bodypoints
+
+
 def _smooth_points(frame_index: int):
     """
     Smoothen points at the specified frame by using surrounding frames, reducing noise and jitter.
@@ -581,120 +766,77 @@ def _get_robotangles_from_robot_bodypoints(frame_index: int):
 
     pass
 
-def pubtest():
-    t_pose_relative_to_hips = Landmarks()
-    t_pose_relative_to_hips.left_hip       = [-45,0,0]
-    t_pose_relative_to_hips.left_wrist     = [183, 95, 0]
-    t_pose_relative_to_hips.right_hip      = [45,0,0]
-    t_pose_relative_to_hips.right_shoulder = [45,95,0]
-    t_pose_relative_to_hips.right_wrist    = [-183, 95, 0]
-    t_pose_relative_to_hips.timestamp      = int(time() * 1000)
-
-
-    t_pose_absolute = Landmarks()
-    t_pose_absolute.left_hip            = [-0.125,0,0]
-    t_pose_absolute.left_wrist          = [.508, .27, 0]
-    t_pose_absolute.left_shoulder       = [-0.125,.27,0]
-    t_pose_absolute.right_hip           = [.125,0,0]
-    t_pose_absolute.right_wrist         = [-.508, .27, 0]
-    t_pose_absolute.right_shoulder      = [.125,.27,0]
-
-
-    a_pose_absolute = Landmarks()
-    a_pose_absolute.left_hip            = [-0.125,0,0]
-    a_pose_absolute.left_shoulder       = [-0.125,.27,0]
-    a_pose_absolute.left_wrist          = [.25, 0, 0]
-    a_pose_absolute.right_hip           = [.125,0,0]
-    a_pose_absolute.right_shoulder      = [.125,.27,0]
-    a_pose_absolute.right_wrist         = [-.25, 0, 0]
-
-    zombie_pose_absolute = Landmarks()
-    zombie_pose_absolute.left_hip            = [-0.125,   0,  0]
-    zombie_pose_absolute.left_shoulder       = [-0.125, .27,  0]
-    zombie_pose_absolute.right_hip           = [  .125,   0,  0]
-    zombie_pose_absolute.right_shoulder      = [  .125, .27,  0]
-    zombie_pose_absolute.left_wrist          = [ 0.125, .28,  1.68]
-    zombie_pose_absolute.right_wrist         = [   -0.125, .28, 1.68]
-
-    t_pose_testing = Landmarks()
-    t_pose_testing.left_hip            = [38.08,-2.5,-0.01]
-    t_pose_testing.left_shoulder       = [80, 209.5,  0.1]
-    t_pose_testing.left_wrist          = [210, 240.5,  0.1]
-    t_pose_testing.right_hip           = [-38,   2.5,  0.013]
-    t_pose_testing.right_shoulder      = [-56,204.5,  0.183]
-    t_pose_testing.right_wrist         = [-277, 185.5,  .16]
-
-    t_pose_testing_2 = Landmarks()
-
-    t_pose_testing_2.left_hip            = [38.08,-2.5,-0.01]
-    t_pose_testing_2.left_shoulder       = [80, 209.5,  0.1]
-    t_pose_testing_2.left_wrist          = [211, 240.5,  -0.2]
-    t_pose_testing_2.right_hip           = [-38,   2.5,  0.013]
-    t_pose_testing_2.right_shoulder      = [-56,204.5,  0.183]
-    t_pose_testing_2.right_wrist         = [-211, 185.5,  -.2]
-
-    scaled = scale_to_robot(t_pose_testing)
-
-    pub.publish(scaled)
-
-FUDGE_FACTOR = 1
-ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
-ROBOT_SHOULDER_TO_HIP = .27
 
 def compute_distance(p1, p2):
     return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + (p1[2] - p2[2])**2)**(1/2)
 
 
+FUDGE_FACTOR = 1
+ROBOT_HIP_METERS = 0.25*FUDGE_FACTOR
+ROBOT_SHOULDER_TO_HIP = .27
+ROBOT_ARM_LENGTH = 0.3
+
+
 def scale_to_robot(msg):
     right_vertical_distance = compute_distance(msg.right_shoulder, msg.right_hip)
     left_vertical_distance = compute_distance(msg.left_shoulder, msg.left_hip)
-    hips_distance = compute_distance(msg.right_hip, msg.left_hip)
 
-    horizontal_scale = ROBOT_HIP_METERS / hips_distance
+    left_horizontal_scale = ROBOT_ARM_LENGTH / left_arm_length
+    right_horizontal_scale = ROBOT_ARM_LENGTH / right_arm_length
     right_vertical_scale = ROBOT_SHOULDER_TO_HIP / right_vertical_distance
     left_vertical_scale = ROBOT_SHOULDER_TO_HIP / left_vertical_distance
-    z_scale_factor = 1.1
+    z_scale_factor = -1.1
 
     newMsg = Landmarks()
-    newMsg.left_hip = [
-        msg.left_hip[2]*z_scale_factor,
-        msg.left_hip[0]*horizontal_scale,
-        msg.left_hip[1]*left_vertical_scale
+    newMsg.left_hip = [                         # camera coords <-> robot coords
+        msg.left_hip[2]*z_scale_factor,         # z <-> x
+        msg.left_hip[0]*left_horizontal_scale,  # x <-> y
+        msg.left_hip[1]*left_vertical_scale     # y <-> z
     ]
     newMsg.right_hip = [
         msg.right_hip[2]*z_scale_factor,
-        msg.right_hip[0]*horizontal_scale,
+        msg.right_hip[0]*right_horizontal_scale,
         msg.right_hip[1]*right_vertical_scale
     ]
     newMsg.right_shoulder = [
         round(msg.right_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.right_shoulder[0]*horizontal_scale, 3),
+        round(msg.right_shoulder[0]*right_horizontal_scale, 3),
         round(msg.right_shoulder[1]*right_vertical_scale, 3)
     ]
     newMsg.left_shoulder = [
         round(msg.left_shoulder[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.left_shoulder[0]*horizontal_scale, 3),
+        round(msg.left_shoulder[0]*left_horizontal_scale, 3),
         round(msg.left_shoulder[1]*right_vertical_scale, 3)
     ]
     newMsg.right_wrist = [
         round(msg.right_wrist[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.right_wrist[0]*horizontal_scale, 3),
+        round(msg.right_wrist[0]*right_horizontal_scale, 3),
         round(msg.right_wrist[1]*right_vertical_scale, 3)
     ]
     newMsg.left_wrist = [
         round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.left_wrist[0]*horizontal_scale, 3),
+        round(msg.left_wrist[0]*left_horizontal_scale, 3),
         round(msg.left_wrist[1]*left_vertical_scale, 3)
     ]
-    rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
-    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    newMsg.right_elbow = [
+        round(msg.right_elbow[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.right_elbow[0]*right_horizontal_scale, 3),
+        round(msg.right_elbow[1]*right_vertical_scale, 3)
+    ]
+    newMsg.left_elbow = [
+        round(msg.left_elbow[2]*z_scale_factor, 3), # z goes in the x spot
+        round(msg.left_elbow[0]*left_horizontal_scale, 3),
+        round(msg.left_elbow[1]*left_vertical_scale, 3)
+    ]
+    # rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
+    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
     return newMsg
 
 
 def app():
     rospy.Subscriber('landmarks', Landmarks, process_bodypoints)
     rospy.init_node('preprocessing', anonymous=True)
-    pubtest()
+    rospy.spin()
 
 
 if __name__ == '__main__':
