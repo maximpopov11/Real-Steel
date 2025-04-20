@@ -73,6 +73,7 @@ def process_bodypoints(msg):
             # We've given time to get in position
             # We're in the calibration period, run calibration before normal processing (without publishing results)
             _calibrate(msg)
+        return
 
     # If this is the first frame we're done calibrating for lets set our arm length values
     if not calibrating:
@@ -140,44 +141,44 @@ def process_bodypoints(msg):
         return
     found_missing_points_ts = int(time() * 1000)
 
-
     # Sometimes after we interpolate points, our hands will be flying off into the distance.
     # Let's cap the maximum distance from the hand to the shoulder and bring it back.
-    if not calibrating:
-        _cap_hand_distances(frames[current_index], left_arm_length, right_arm_length)
-        _smooth_points(current_index)
-        frames[current_index].bodypoints = _rolling_average(current_index, 5)
-        _rolling_average(current_index, 5)
-        smoothed_points_ts = int(time() * 1000)
+    _cap_hand_distances(frames[current_index], left_arm_length, right_arm_length)
+    
+    # _smooth_points will snap points within a certain distance to be at the same spot to reduce jitter
+    _smooth_points(current_index)
+    # _rolling_average will average the last 4 frames with the current one to create a smoother graph
+    smoothed_points_ts = int(time() * 1000)
 
-        _translate_points(current_index)
+    _translate_points(current_index)
+
+    averaged_frame = _rolling_average(current_frame, 4)
 
     preprocessed_msg = Landmarks()
-    preprocessed_msg.nose           = current_frame.bodypoints[0]
-    preprocessed_msg.left_hip       = current_frame.bodypoints[1]
-    preprocessed_msg.left_shoulder  = current_frame.bodypoints[2]
-    preprocessed_msg.left_elbow     = current_frame.bodypoints[3]
-    preprocessed_msg.left_wrist     = current_frame.bodypoints[4]
-    preprocessed_msg.left_pinky     = current_frame.bodypoints[5]
-    preprocessed_msg.left_index     = current_frame.bodypoints[6]
-    preprocessed_msg.left_thumb     = current_frame.bodypoints[7]
-    preprocessed_msg.right_hip      = current_frame.bodypoints[8]
-    preprocessed_msg.right_shoulder = current_frame.bodypoints[9]
-    preprocessed_msg.right_elbow    = current_frame.bodypoints[10]
-    preprocessed_msg.right_wrist    = current_frame.bodypoints[11]
-    preprocessed_msg.right_pinky    = current_frame.bodypoints[12]
-    preprocessed_msg.right_index    = current_frame.bodypoints[13]
-    preprocessed_msg.right_thumb    = current_frame.bodypoints[14]
-    preprocessed_msg.timestamp      = current_frame.timestamp
+    preprocessed_msg.nose           = averaged_frame.bodypoints[0]
+    preprocessed_msg.left_hip       = averaged_frame.bodypoints[1]
+    preprocessed_msg.left_shoulder  = averaged_frame.bodypoints[2]
+    preprocessed_msg.left_elbow     = averaged_frame.bodypoints[3]
+    preprocessed_msg.left_wrist     = averaged_frame.bodypoints[4]
+    preprocessed_msg.left_pinky     = averaged_frame.bodypoints[5]
+    preprocessed_msg.left_index     = averaged_frame.bodypoints[6]
+    preprocessed_msg.left_thumb     = averaged_frame.bodypoints[7]
+    preprocessed_msg.right_hip      = averaged_frame.bodypoints[8]
+    preprocessed_msg.right_shoulder = averaged_frame.bodypoints[9]
+    preprocessed_msg.right_elbow    = averaged_frame.bodypoints[10]
+    preprocessed_msg.right_wrist    = averaged_frame.bodypoints[11]
+    preprocessed_msg.right_pinky    = averaged_frame.bodypoints[12]
+    preprocessed_msg.right_index    = averaged_frame.bodypoints[13]
+    preprocessed_msg.right_thumb    = averaged_frame.bodypoints[14]
+    preprocessed_msg.timestamp      = averaged_frame.timestamp
 
-    if not calibrating:
-        # We don't want to publish if we're calibrating still
-        preprocessed_pub.publish(preprocessed_msg)
-        published_ts = int(time() * 1000)
-        rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+    # We don't want to publish if we're calibrating still
+    preprocessed_pub.publish(preprocessed_msg)
+    published_ts = int(time() * 1000)
+    rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
 
-        scaled_msg = scale_to_robot(preprocessed_msg)
-        scaled_pub.publish(scaled_msg)
+    scaled_msg = scale_to_robot(preprocessed_msg)
+    scaled_pub.publish(scaled_msg)
 
 
 # A sorted list of calculated arm lengths from frames
@@ -587,35 +588,48 @@ def _cap_hand_distances(current_frame, max_left_length, max_right_length):
                 # Update the wrist position
                 current_frame.bodypoints[11] = new_wrist
 
+def _rolling_average(cur_frame_idx: int, count_to_use: int) -> List[List[float]]:
+    """
+    Smooth points as the specified frame by averaging its value with the previous count_to_use frames.
+    Produces a smoother graph with less variation. If cur_frame_idx < (count_to_use+1), is a no-op
 
-def _rolling_average(cur_frame_idx: int, average_count: int) -> List[List[float]]:
+    Args:
+        cur_frame_idx : Index of the frame in the current_frames list to use
+        count_to_use : The number of previous frames to average this one with, for a total of count_to_use+1 frames averaged
+
+    Returns:
+        A frame with the points averaged, leaving the original frame as is.
+    """
+    average_count = count_to_use+1
+    current_frame = frames[cur_frame_idx]
+
 
     if cur_frame_idx < average_count:
-        return frames[cur_frame_idx].bodypoints
-    
-    current_frame = frames[cur_frame_idx]
+        return current_frame    
 
     new_frame = Frame(current_frame.timestamp)
 
-    # project the last 5 frames to 
+    # project the last 5 frames' bodypoints to an array so we can index more easily
     arr_of_bodypoints = [frames[i].bodypoints for i in range(cur_frame_idx-(average_count-1), cur_frame_idx+1)]
-    print(f"arr of bp {arr_of_bodypoints}")
+
+    # Initialize array of average we'll be using, to avoid modifing the array while computing the average.
     new_frame.bodypoints = [[0, 0, 0] for i in range(0, len(current_frame.bodypoints))]
+    # For each bodypoint
     for bp_idx in range(0, len(current_frame.bodypoints)):
-        # for our new frame, at the bodypoints index, project the values across the last 5 frames into their own array
+        # Project the values across the last average_count frames into their own array; this contains average_count values for the same bodypoint
         projected_bp_for_index = [bodypoints[bp_idx] for bodypoints in arr_of_bodypoints]
 
-        # average and assign them back into the new frame    
+        # average across those projected values for xyz, and then put them into the new averaged_bodypoints array at the right spot
         new_frame.bodypoints[bp_idx][0] = sum([point[0] for point in projected_bp_for_index]) / average_count
         new_frame.bodypoints[bp_idx][1] = sum([point[1] for point in projected_bp_for_index]) / average_count
         new_frame.bodypoints[bp_idx][2] = sum([point[2] for point in projected_bp_for_index]) / average_count
 
         # Debug statements
-        print(f"cur_frame: {cur_frame_idx} | averaging bp {bp_idx} X : {[point[0] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][0]}")
-        print(f"                                     Y : {[point[1] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][1]}")
-        print(f"                                     Z : {[point[2] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][2]}")
-
-    return new_frame.bodypoints
+        #rospy.logdebug(f"cur_frame: {cur_frame_idx} | averaging bp {bp_idx} X : {[point[0] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][0]}")
+        #rospy.logdebug(f"                                     Y : {[point[1] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][1]}")
+        #rospy.logdebug(f"                                     Z : {[point[2] for point in projected_bp_for_index]} -> {new_frame.bodypoints[bp_idx][2]}")
+    
+    return new_frame
 
 
 def _smooth_points(frame_index: int):
@@ -788,10 +802,10 @@ def scale_to_robot(msg):
     z_scale_factor = -1.1
 
     newMsg = Landmarks()
-    newMsg.left_hip = [                         # camera coords <-> robot coords
-        msg.left_hip[2]*z_scale_factor,         # z <-> x
-        msg.left_hip[0]*left_horizontal_scale,  # x <-> y
-        msg.left_hip[1]*left_vertical_scale     # y <-> z
+    newMsg.left_hip = [                      # camera coords <-> robot coords
+        msg.left_hip[2]*z_scale_factor,      # z <-> x
+        msg.left_hip[0]*left_horizontal_scale,    # x <-> y
+        msg.left_hip[1]*left_vertical_scale  # y <-> z
     ]
     newMsg.right_hip = [
         msg.right_hip[2]*z_scale_factor,
@@ -817,16 +831,6 @@ def scale_to_robot(msg):
         round(msg.left_wrist[2]*z_scale_factor, 3), # z goes in the x spot
         round(msg.left_wrist[0]*left_horizontal_scale, 3),
         round(msg.left_wrist[1]*left_vertical_scale, 3)
-    ]
-    newMsg.right_elbow = [
-        round(msg.right_elbow[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.right_elbow[0]*right_horizontal_scale, 3),
-        round(msg.right_elbow[1]*right_vertical_scale, 3)
-    ]
-    newMsg.left_elbow = [
-        round(msg.left_elbow[2]*z_scale_factor, 3), # z goes in the x spot
-        round(msg.left_elbow[0]*left_horizontal_scale, 3),
-        round(msg.left_elbow[1]*left_vertical_scale, 3)
     ]
     # rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
     rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
