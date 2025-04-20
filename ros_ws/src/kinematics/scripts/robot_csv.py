@@ -4,10 +4,12 @@ import rospy
 import csv
 import math
 from custom_msg.msg import Angles
+SPEED_THRESHOLD = 35.0  # rad/s
+
 
 class CsvWriterNode:
     def __init__(self, output_filename):
-        self.SPEED_THRESHOLD = 35.0  # rad/s
+        self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
         self.output_filename = output_filename
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
