@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-"""
-Need to get speed between angles. Don't need distance.
-"""
+
 import rospy
 import csv
 import math
@@ -9,6 +7,7 @@ from custom_msg.msg import Angles
 
 class CsvWriterNode:
     def __init__(self, output_filename):
+        self.SPEED_THRESHOLD = 35.0  # rad/s
         self.output_filename = output_filename
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
@@ -69,9 +68,9 @@ class CsvWriterNode:
         # Find the maximum speed across all joints
         max_speed = max(speed_per_joint)
 
-        if max_speed > 35.0:  # Threshold is 35 rad/s
+        if max_speed > self.SPEED_THRESHOLD:  # Threshold is 35 rad/s
             # Calculate required steps to stay under 35 rad/s
-            required_steps = math.ceil(max_speed / 35.0)
+            required_steps = math.ceil(max_speed / self.SPEED_THRESHOLD)
             rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
             interpolated = self.interpolate_points(self.last_angles, current_angles, required_steps)
             for angles in interpolated:
