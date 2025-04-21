@@ -4,7 +4,7 @@ import rospy
 import csv
 import math
 from custom_msg.msg import Angles
-SPEED_THRESHOLD = 32.0  # rad/s
+SPEED_THRESHOLD = 2.0  # rad/s
 
 
 
