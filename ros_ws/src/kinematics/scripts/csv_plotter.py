@@ -16,11 +16,9 @@ class JointAnglePlotter:
             sys.exit(1)
             
         self.timestamps = []
-        self.joint_angles = {
-            'left': {i: {'values': [], 'start': 0.0} for i in range(5)},
-            'right': {i: {'values': [], 'start': 0.0} for i in range(5)}
-        }
-        self.MAX_SPEED_THRESHOLD = 35.0  # rad/s threshold from robot_csv.py
+        self.joint_angles = {'left': [], 'right': []}
+        self.joint_names = {'left': [], 'right': []}
+        self.MAX_SPEED_THRESHOLD = 32.0
         self.read_csv()
         self.plot_joint_data()
 
@@ -30,6 +28,14 @@ class JointAnglePlotter:
                 reader = csv.reader(f)
                 headers = next(reader)
                 rospy.loginfo(f"CSV headers: {headers}")
+
+                # Extract joint names from headers
+                self.joint_names['left'] = headers[1:6]  # First 5 after timestamp
+                self.joint_names['right'] = headers[6:11] # Next 5
+                
+                # Initialize data structures
+                self.joint_angles['left'] = [{'values': [], 'start': 0.0} for _ in range(5)]
+                self.joint_angles['right'] = [{'values': [], 'start': 0.0} for _ in range(5)]
                 
                 for row_idx, row in enumerate(reader):
                     current_time = float(row[0]) 
@@ -38,17 +44,19 @@ class JointAnglePlotter:
                     else:
                         self.timestamps.append(current_time - self.timestamps[0])
                     
-                    for joint in range(5):
-                        angle = float(row[1+joint])
-                        self.joint_angles['left'][joint]['values'].append(angle)
+                    # Read left joints
+                    for i in range(5):
+                        val = float(row[1+i])
+                        self.joint_angles['left'][i]['values'].append(val)
                         if row_idx == 0:
-                            self.joint_angles['left'][joint]['start'] = angle
+                            self.joint_angles['left'][i]['start'] = val
                     
-                    for joint in range(5):
-                        angle = float(row[6+joint])
-                        self.joint_angles['right'][joint]['values'].append(angle)
+                    # Read right joints
+                    for i in range(5):
+                        val = float(row[6+i])
+                        self.joint_angles['right'][i]['values'].append(val)
                         if row_idx == 0:
-                            self.joint_angles['right'][joint]['start'] = angle
+                            self.joint_angles['right'][i]['start'] = val
             
             rospy.loginfo(f"Processed {len(self.timestamps)} data points")
             
@@ -56,35 +64,37 @@ class JointAnglePlotter:
             rospy.logerr(f"CSV read error: {str(e)}")
             raise
 
-    def _plot_speed(self, joint_type, joint_num, values, output_dir):
+    def _plot_speed(self, joint_name, values, output_dir):
         """Helper function to plot speed for a single joint"""
         times = self.timestamps
         speeds = []
         speed_times = []
         
         if len(values) < 2:
-            rospy.logwarn(f"Not enough data to compute speed for {joint_type} joint {joint_num}")
+            rospy.logwarn(f"Not enough data to compute speed for {joint_name}")
             return
         
         for i in range(1, len(values)):
             delta_t = times[i] - times[i-1]
             if delta_t <= 0:
                 continue
-            speed = (values[i] - values[i-1]) / delta_t #speed / time
+            speed = (values[i] - values[i-1]) / delta_t
             speeds.append(speed)
             speed_times.append(times[i])
 
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(speed_times, speeds, color='orange', label='Joint Speed')
         ax.axhline(y=self.MAX_SPEED_THRESHOLD, color='red', linestyle='--', 
-                  label=f'Max Speed Threshold ({self.MAX_SPEED_THRESHOLD} rad/s)')
-        ax.set_title(f'{joint_type.capitalize()} Arm Joint {joint_num} Speed vs Time')
+                  label=f'Max Threshold ({self.MAX_SPEED_THRESHOLD} rad/s)')
+        ax.set_title(f'{joint_name} Speed vs Time')
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Speed (rad/s)')
         ax.grid(True)
         ax.legend()
         
-        output_path = os.path.join(output_dir, f'{joint_type}_joint_{joint_num}_speed.png')
+        # Sanitize filename
+        safe_name = "".join([c if c.isalnum() else "_" for c in joint_name])
+        output_path = os.path.join(output_dir, f'{safe_name}_speed.png')
         plt.savefig(output_path)
         plt.close()
         rospy.loginfo(f"Saved speed plot: {output_path}")
@@ -94,42 +104,50 @@ class JointAnglePlotter:
         os.makedirs(output_dir, exist_ok=True)
 
         # Plot left arm joints
-        for joint in range(5):
+        for idx, joint_name in enumerate(self.joint_names['left']):
+            data = self.joint_angles['left'][idx]
+            
             # Plot angles
             fig, ax = plt.subplots(figsize=(10, 5))
-            data = self.joint_angles['left'][joint]
             ax.plot(self.timestamps, data['values'], label='Joint Angle', color='blue')
             ax.axhline(y=data['start'], color='red', linestyle='--', label='Start Position')
-            ax.set_title(f'Left Arm Joint {joint} Angle vs Time')
+            ax.set_title(f'{joint_name} Angle vs Time')
             ax.set_xlabel('Time (s)')
             ax.set_ylabel('Angle (rad)')
             ax.grid(True)
             ax.legend()
-            output_path = os.path.join(output_dir, f'left_joint_{joint}_angle.png')
+            
+            # Sanitize filename
+            safe_name = "".join([c if c.isalnum() else "_" for c in joint_name])
+            output_path = os.path.join(output_dir, f'{safe_name}_angle.png')
             plt.savefig(output_path)
             plt.close()
             
             # Plot speeds
-            self._plot_speed('left', joint, data['values'], output_dir)
+            self._plot_speed(joint_name, data['values'], output_dir)
 
         # Plot right arm joints
-        for joint in range(5):
+        for idx, joint_name in enumerate(self.joint_names['right']):
+            data = self.joint_angles['right'][idx]
+            
             # Plot angles
             fig, ax = plt.subplots(figsize=(10, 5))
-            data = self.joint_angles['right'][joint]
             ax.plot(self.timestamps, data['values'], label='Joint Angle', color='green')
             ax.axhline(y=data['start'], color='red', linestyle='--', label='Start Position')
-            ax.set_title(f'Right Arm Joint {joint} Angle vs Time')
+            ax.set_title(f'{joint_name} Angle vs Time')
             ax.set_xlabel('Time (s)')
             ax.set_ylabel('Angle (rad)')
             ax.grid(True)
             ax.legend()
-            output_path = os.path.join(output_dir, f'right_joint_{joint}_angle.png')
+            
+            # Sanitize filename
+            safe_name = "".join([c if c.isalnum() else "_" for c in joint_name])
+            output_path = os.path.join(output_dir, f'{safe_name}_angle.png')
             plt.savefig(output_path)
             plt.close()
             
             # Plot speeds
-            self._plot_speed('right', joint, data['values'], output_dir)
+            self._plot_speed(joint_name, data['values'], output_dir)
 
 def main():
     rospy.init_node('joint_angle_visualizer')

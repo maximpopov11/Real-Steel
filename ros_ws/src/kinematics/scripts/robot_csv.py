@@ -4,16 +4,33 @@ import rospy
 import csv
 import math
 from custom_msg.msg import Angles
+SPEED_THRESHOLD = 2.0  # rad/s
+
+
+
+left_arm_joint_names = [
+    "left_shoulder_pitch_joint", 
+    "left_shoulder_roll_joint", 
+    "left_shoulder_yaw_joint", 
+    "left_elbow_joint"
+]
+
+right_arm_joint_names = [
+    "right_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_shoulder_yaw_joint",
+    "right_elbow_joint"
+]
 
 class CsvWriterNode:
     def __init__(self, output_filename):
-        self.SPEED_THRESHOLD = 35.0  # rad/s
+        self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
         self.output_filename = output_filename
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
         headers = ['timestamp']
-        headers += [f'left_joint_{i}' for i in range(5)]
-        headers += [f'right_joint_{i}' for i in range(5)]
+        headers += left_arm_joint_names
+        headers += right_arm_joint_names
         self.writer.writerow(headers)
         rospy.loginfo(f"CSV file '{self.output_filename}' created with headers.")
         
