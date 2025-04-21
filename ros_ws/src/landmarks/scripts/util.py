@@ -226,7 +226,7 @@ def process_bodypoints(msg):
 
     _translate_points(current_index)
 
-    averaged_frame = _rolling_average(current_frame, 4)
+    averaged_frame = _rolling_average(current_index, 4)
 
     preprocessed_msg = Landmarks()
     preprocessed_msg.nose           = averaged_frame.bodypoints[0]
