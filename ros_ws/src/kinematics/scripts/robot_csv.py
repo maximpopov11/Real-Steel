@@ -9,17 +9,21 @@ SPEED_THRESHOLD = 2.0  # rad/s
 
 
 left_arm_joint_names = [
-    "left_shoulder_pitch_joint", 
-    "left_shoulder_roll_joint", 
-    "left_shoulder_yaw_joint", 
-    "left_elbow_joint"
+    "left_shoulder_pitch_joint",
+    "left_shoulder_roll_joint",
+    "left_shoulder_yaw_joint",
+    "left_elbow_joint",
+    "left_wrist_roll_joint",
+    "left_wrist_pitch_joint"
 ]
 
 right_arm_joint_names = [
     "right_shoulder_pitch_joint",
     "right_shoulder_roll_joint",
     "right_shoulder_yaw_joint",
-    "right_elbow_joint"
+    "right_elbow_joint",
+    "right_wrist_roll_joint",
+    "right_wrist_pitch_joint"
 ]
 
 class CsvWriterNode:
@@ -33,7 +37,7 @@ class CsvWriterNode:
         headers += right_arm_joint_names
         self.writer.writerow(headers)
         rospy.loginfo(f"CSV file '{self.output_filename}' created with headers.")
-        
+
         self.subscriber = rospy.Subscriber('robot_angles', Angles, self.callback)
         rospy.loginfo("Subscribed to 'robot_angles' topic.")
 
@@ -47,13 +51,13 @@ class CsvWriterNode:
         for step in range(1, num_steps + 1):
             # Calculate interpolation ratio (0 = start, 1 = end)
             alpha = step / num_steps  # Ranges from 1/num_steps to 1.0
-            # Linear interpolation for each joint: 
+            # Linear interpolation for each joint:
             # angle = start + (end - start) * progress_ratio
             interp = [s + alpha * (e - s) for s, e in zip(start_angles, end_angles)]
             # Store this interpolated step
             interpolated.append(interp)
         return interpolated
-    
+
 
     def callback(self, msg):
         rospy.loginfo("Received angles message.")
