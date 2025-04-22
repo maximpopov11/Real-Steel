@@ -1,0 +1,9 @@
+<launch>
+    <!-- Angle Calculation -->
+    <node pkg="kinematics" type="main.py" name="inverse_kinematics" output="screen"/>
+    
+    <!-- CSV Logger -->
+    <node pkg="kinematics" type="robot_csv.py" name="angle_recorder" output="screen">
+        <!-- <param name="output_file" value="$(find kinematics)/output/angles.csv"/> -->
+    </node>
+</launch>
