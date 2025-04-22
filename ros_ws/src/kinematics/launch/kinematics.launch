@@ -4,6 +4,6 @@
     
     <!-- CSV Logger -->
     <node pkg="kinematics" type="robot_csv.py" name="angle_recorder" output="screen">
-        <!-- <param name="output_file" value="$(find kinematics)/output/angles.csv"/> -->
+        <param name="output_file" value="$(find kinematics)/output/angles.csv"/>
     </node>
 </launch>
