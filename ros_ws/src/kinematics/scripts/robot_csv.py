@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import rospy
 import csv
 import math
@@ -26,6 +27,8 @@ class CsvWriterNode:
     def __init__(self, output_filename):
         self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
         self.output_filename = output_filename
+
+        os.makedirs(os.path.dirname(self.output_filename), exist_ok=True)
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
         headers = ['timestamp']
@@ -114,7 +117,7 @@ class CsvWriterNode:
 
 def main():
     rospy.init_node('robot_csv')
-    output_filename = 'angles.csv'#rospy.get_param('~output_file', 'angles.csv')
+    output_filename = rospy.get_param('~output_file', 'angles.csv')
     csv_node = CsvWriterNode(output_filename)
     rospy.on_shutdown(csv_node.shutdown_hook)
     rospy.spin()
