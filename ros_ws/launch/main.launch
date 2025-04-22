@@ -1,0 +1,18 @@
+<launch>
+    <!-- Custom Messages (Must be built first) -->
+    <include file="$(find custom_msg)/launch/custom_msg.launch" />
+
+    <!-- Landmarks Node -->
+    <node pkg="landmarks" type="main.py" name="landmarks_node" output="screen">
+        <param name="combined" value="true" />
+    </node>
+
+    <!-- Kinematics Main Node (Angle Calculation) -->
+    <node pkg="kinematics" type="main.py" name="kinematics_node" output="screen"/>
+
+    <!-- CSV Writer Node -->
+    <node pkg="kinematics" type="robot_csv.py" name="robot_csv_node" output="screen">
+        <param name="output_file" value="$(find kinematics)/output/angles.csv"/>
+    </node>
+
+</launch>
