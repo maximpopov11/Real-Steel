@@ -114,7 +114,7 @@ class CsvWriterNode:
 
 def main():
     rospy.init_node('robot_csv')
-    output_filename = rospy.get_param('~output_file', 'angles.csv')
+    output_filename = 'angles.csv'#rospy.get_param('~output_file', 'angles.csv')
     csv_node = CsvWriterNode(output_filename)
     rospy.on_shutdown(csv_node.shutdown_hook)
     rospy.spin()
