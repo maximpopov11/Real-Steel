@@ -1,9 +1,9 @@
 <launch>
     <!-- Custom Messages -->
-    <include file="$(find custom_msg)/launch/custom_msg.launch"/>
+    <!-- <include file="$(find custom_msg)/launch/custom_msg.launch"/> -->
     
     <!-- Landmarks -->
-    <include file="$(find landmarks)/launch/landmarks.launch"/>
+    <!-- <include file="$(find landmarks)/launch/landmarks.launch"/> -->
 
     <!-- G1 Move It -->
     <include file="$(find g1_moveit_config)/launch/demo.launch"/>
