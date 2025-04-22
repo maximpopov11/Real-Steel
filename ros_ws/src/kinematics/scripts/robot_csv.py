@@ -72,7 +72,8 @@ class CsvWriterNode:
         if self.last_angles is None:
             # First message, write directly
             timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm
+            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
+            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
             self.writer.writerow(row)
             self.last_angles = current_angles
             self.time_count += 0.1
@@ -98,7 +99,8 @@ class CsvWriterNode:
                 left = angles[:5]
                 right = angles[5:]
                 timestamp = f"{self.time_count:.3f}"
-                row = [timestamp] + left + right
+                row = [timestamp] + left + right # uncomment this normally (for arm with 6 dof)
+                # row = [timestamp] + left + [0] + right + [0] # comment if not using dof of 6
                 self.writer.writerow(row)
                 rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
                 self.time_count += 0.1
@@ -106,7 +108,8 @@ class CsvWriterNode:
         else:
             # Write current angles
             timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm
+            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
+            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
             self.writer.writerow(row)
             rospy.loginfo(f"Recorded angles at {timestamp}")
             self.time_count += 0.1
