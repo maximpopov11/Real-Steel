@@ -55,7 +55,7 @@ class CsvWriterNode:
             self.time_count += 0.1
             rospy.loginfo(f"Recorded initial angles at {timestamp}")
             return
-
+        # Calculate angular speed for each joint (rad/s)
         time_diff = 0.1  # Fixed time step between callbacks
         speed_per_joint = [
             abs(curr - last) / time_diff
@@ -78,6 +78,7 @@ class CsvWriterNode:
                 self.time_count += 0.1
             self.last_angles = current_angles
         else:
+            # Write current angles
             timestamp = f"{self.time_count:.3f}"
             row = [timestamp] + left_arm + right_arm
             self.writer.writerow(row)
