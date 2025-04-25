@@ -1,13 +1,30 @@
 <robot name="g1_29dof_rev_1_0">
-    <mujoco>
-        <compiler meshdir="package://g1_moveit_config/meshes" discardvisual="false" />
-    </mujoco>
-    <!-- [CAUTION] uncomment when convert to mujoco -->
-    <!-- <link name="world"></link>
-  <joint name="floating_base_joint" type="floating">
-    <parent link="world"/>
-    <child link="pelvis"/>
-  </joint> -->
+    <link name="safe_zone_behind_link">
+        <visual>
+            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </link>
+    <joint name="safe_zone_behind_joint" type="fixed">
+        <parent link="pelvis" />
+        <child link="safe_zone_behind_link" />
+    </joint>
     <link name="pelvis">
         <inertial>
             <origin xyz="0 0 -0.07605" rpy="0 0 0" />
