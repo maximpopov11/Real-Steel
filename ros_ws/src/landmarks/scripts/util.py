@@ -1,6 +1,11 @@
 from time import time
 
 import os
+import rospkg  # Add this import
+
+# Get proper ROS package path
+rospack = rospkg.RosPack()
+LANDMARKS_PKG_PATH = rospack.get_path('landmarks')
 
 CAMERA_WIDTH = 640
 CAMERA_HEIGHT = 480
@@ -8,10 +13,10 @@ MIN_POSE_DETECTION_CONFIDENCE = .95
 
 curr_dir = os.getcwd()
 
-LIB_DIR_PATH = os.path.join(curr_dir, "src/landmarks/lib")
-MP_LITE_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_lite.task"
-MP_FULL_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_full.task"
-MP_HEAVY_MODEL_PATH = f"{LIB_DIR_PATH}/pose_landmarker_heavy.task"
+LIB_DIR_PATH = os.path.join(LANDMARKS_PKG_PATH, "lib")
+MP_LITE_MODEL_PATH = os.path.join(LIB_DIR_PATH, "pose_landmarker_lite.task")
+MP_FULL_MODEL_PATH = os.path.join(LIB_DIR_PATH, "pose_landmarker_full.task")
+MP_HEAVY_MODEL_PATH = os.path.join(LIB_DIR_PATH, "pose_landmarker_heavy.task")
 
 def timestamp() -> int:
     """Returns the current time in milliseconds since the epoch using time()."""
