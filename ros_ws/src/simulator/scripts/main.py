@@ -49,7 +49,7 @@ def callback(msg):
         for angles in interpolated:
             left = angles[:5]
             right = angles[5:]
-            
+
             left_interpolated_angles.append(left)
             right_interpolated_anlges.append(right)
 
