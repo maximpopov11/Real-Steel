@@ -1,20 +1,36 @@
 #!/usr/bin/env python
-"""
-Need to get speed between angles. Don't need distance.
-"""
+
 import rospy
 import csv
 import math
 from custom_msg.msg import Angles
+SPEED_THRESHOLD = 2.0  # rad/s
+
+
+
+left_arm_joint_names = [
+    "left_shoulder_pitch_joint", 
+    "left_shoulder_roll_joint", 
+    "left_shoulder_yaw_joint", 
+    "left_elbow_joint"
+]
+
+right_arm_joint_names = [
+    "right_shoulder_pitch_joint",
+    "right_shoulder_roll_joint",
+    "right_shoulder_yaw_joint",
+    "right_elbow_joint"
+]
 
 class CsvWriterNode:
     def __init__(self, output_filename):
+        self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
         self.output_filename = output_filename
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
         headers = ['timestamp']
-        headers += [f'left_joint_{i}' for i in range(5)]
-        headers += [f'right_joint_{i}' for i in range(5)]
+        headers += left_arm_joint_names
+        headers += right_arm_joint_names
         self.writer.writerow(headers)
         rospy.loginfo(f"CSV file '{self.output_filename}' created with headers.")
         
@@ -69,9 +85,9 @@ class CsvWriterNode:
         # Find the maximum speed across all joints
         max_speed = max(speed_per_joint)
 
-        if max_speed > 35.0:  # Threshold is 35 rad/s
+        if max_speed > self.SPEED_THRESHOLD:  # Threshold is 35 rad/s
             # Calculate required steps to stay under 35 rad/s
-            required_steps = math.ceil(max_speed / 35.0)
+            required_steps = math.ceil(max_speed / self.SPEED_THRESHOLD)
             rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
             interpolated = self.interpolate_points(self.last_angles, current_angles, required_steps)
             for angles in interpolated:
