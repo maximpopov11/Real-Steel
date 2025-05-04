@@ -3,7 +3,7 @@
         <visual>
             <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".09" length=".35"/>
+                <cylinder radius=".09" length=".35" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -12,9 +12,14 @@
         <collision>
             <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".09" length=".35"/>
+                <cylinder radius=".09" length=".35" />
             </geometry>
         </collision>
+        <inertial>
+            <mass value="0.1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
     </link>
     <joint name="safe_zone_above_joint" type="fixed">
         <parent link="head_link" />
