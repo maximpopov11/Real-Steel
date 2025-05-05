@@ -1,14 +1,30 @@
 right_arm:
   kinematics_solver: cached_ik_kinematics_plugin/CachedKDLKinematicsPlugin
   kinematics_solver_search_resolution: 0.005
-  kinematics_solver_timeout: 0.005
-  goal_joint_tolerance: 0.0001
-  goal_position_tolerance: 0.0001
+  kinematics_solver_timeout: 0.01
+  goal_joint_tolerance: 0.001
+  goal_position_tolerance: 0.001
+
+  # position only ik ignores the orientation
+  position_only_ik: True
   goal_orientation_tolerance: 0.001
+
+  # optional parameters for caching:
+  max_cache_size: 10000
+  min_pose_distance: 1
+  min_joint_config_distance: 4
 left_arm:
   kinematics_solver: cached_ik_kinematics_plugin/CachedKDLKinematicsPlugin
   kinematics_solver_search_resolution: 0.005
   kinematics_solver_timeout: 0.005
-  goal_joint_tolerance: 0.0001
-  goal_position_tolerance: 0.0001
+  goal_joint_tolerance: 0.001
+  goal_position_tolerance: 0.001
+
+  # position only ik ignores the orientation
+  position_only_ik: True
   goal_orientation_tolerance: 0.001
+
+  # optional parameters for caching:
+  max_cache_size: 10000
+  min_pose_distance: 1
+  min_joint_config_distance: 4
