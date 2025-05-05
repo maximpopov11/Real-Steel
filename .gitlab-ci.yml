@@ -1,5 +1,49 @@
+stages:
+  - lint
+  - build
+  - test
+  - deploy
+
+variables:
+  ROS_DISTRO: "noetic"
+  CATKIN_WS: "${CI_PROJECT_DIR}/ros_ws"
+  DEBIAN_FRONTEND: "noninteractive"
+
+.ros_base:
+  image: ros:${ROS_DISTRO}
+  before_script:
+    - apt-get update -q
+    - apt-get install -y python3-pip python3-rosdep git
+    - pip3 install pytest pytest-cov
+    - rosdep update
+
+lint_ros:
+  stage: lint
+  extends: .ros_base
+  script:
+    - apt-get install -y python3-catkin-lint clang-format
+    - cd ${CATKIN_WS}
+    - catkin_lint src/
+    - find src/ -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
+
+build_ros:
+  stage: build
+  extends: .ros_base
+  script:
+    - cd ${CATKIN_WS}
+    - apt-get install -y python3-catkin-tools
+    - rosdep install --from-paths src --ignore-src -r -y
+    - source /opt/ros/${ROS_DISTRO}/setup.bash
+    - catkin_make -j$(nproc)
+  artifacts:
+    paths:
+      - ${CATKIN_WS}/build/
+      - ${CATKIN_WS}/devel/
+    expire_in: 1 day
+
 test_ros:
   stage: test
+  extends: .ros_base
   dependencies:
     - build_ros
   script:
@@ -43,3 +87,12 @@ test_ros:
     reports:
       junit: ${CATKIN_WS}/build/test_results/**/*.xml
     when: always
+
+deploy:
+  stage: deploy
+  image: alpine
+  script:
+    - echo "Deploying application..."
+  # only:
+  #   - main
+  # when: manual
