@@ -16,7 +16,6 @@ variables:
     - apt-get update -q
     - apt-get install -y python3-pip python3-catkin-tools python3-rosdep git
     - pip3 install pytest pytest-cov
-    - if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
     - rosdep update
     - source /opt/ros/${ROS_DISTRO}/setup.bash
 
@@ -58,17 +57,19 @@ test:
   dependencies:
     - build
   script:
+    # Install only ROS-specific testing dependencies (skip heavy ML libraries)
+    - pip3 install --no-cache-dir pytest pytest-cov
+
     # Source the workspace
     - source ${CATKIN_WS}/devel/setup.bash
     
     # List packages to verify build worked
     - echo "Checking built packages:"
-    - |
-      rospack list | grep ${CATKIN_WS} || echo "Warning: No packages found in workspace"
+    - "rospack list | grep ${CATKIN_WS} || echo 'Warning: No packages found in workspace'"
     
     # Run tests if they exist
     - cd ${CATKIN_WS}
-    - catkin_make run_tests -j4 || echo "Some tests failed or no tests exist"
+    - catkin_make run_tests -j2 || echo "Some tests failed or no tests exist"
     
     # Report test results but don't fail the pipeline if tests fail
     - catkin_test_results --verbose || echo "Test failures detected"
@@ -77,18 +78,9 @@ test:
     - echo "Checking launch files:" 
     - find ${CATKIN_WS}/src -name "*.launch" -exec roslaunch-check {} \; || echo "Launch file validation issues found"
     
-    # For Python nodes, run pytest on test directories
+    # For Python nodes, run pytest on test directories (only for ROS-specific tests)
     - echo "Running Python tests:"
     - find ${CATKIN_WS}/src -path "*/test/*.py" -exec python3 -m pytest {} \; || echo "Python test failures detected"
-    
-    # Uncomment to test node initialization
-    # - echo "Testing node initialization:"
-    # - cd ${CATKIN_WS}
-    # - for pkg in $(find src -name "package.xml" | xargs dirname | xargs basename); do
-    #     for node in $(find src/$pkg -type f -executable -not -path "*/\.*" | xargs basename); do
-    #       timeout 5s rosrun $pkg $node --help || echo "Node $pkg/$node failed to run";
-    #     done
-    #   done
   artifacts:
     paths:
       - ${CATKIN_WS}/build/test_results/
