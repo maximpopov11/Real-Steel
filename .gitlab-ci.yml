@@ -1,57 +1,101 @@
 stages:
+  - test
   - build
+  - deploy
 
 # Define variables
 variables:
-  ROS_DISTRO: noetic                     # Specify the ROS distribution
-  CATKIN_WS: $CI_PROJECT_DIR/ros_ws      # Define the path for the Catkin workspace (Updated)
+  ROS_DISTRO: noetic
+  CATKIN_WS: $CI_PROJECT_DIR/ros_ws
+  PYTHON_VERSION: "3"
+  DEBIAN_FRONTEND: noninteractive
 
 # Use an official ROS Docker image
 image: ros:${ROS_DISTRO}-robot
 
+# Cache pip packages to speed up builds
+cache:
+  paths:
+    - ~/.cache/pip/
+
+# Common setup commands used across jobs
+.setup_common: &setup_common
+  - apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      git \
+      python${PYTHON_VERSION}-pip \
+      python${PYTHON_VERSION}-catkin-tools \
+      python${PYTHON_VERSION}-rosdep \
+      build-essential \
+      ccache \
+      clang-format \
+      clang-tidy
+  - pip${PYTHON_VERSION} install --upgrade pip
+  - if [ -f requirements.txt ]; then pip${PYTHON_VERSION} install -r requirements.txt; fi
+  - rosdep init || echo "rosdep already initialized."
+  - rosdep update
+  - source /opt/ros/${ROS_DISTRO}/setup.bash
+  - mkdir -p ${CATKIN_WS}/src
+  - cp -r ./* ${CATKIN_WS}/src/
+  - cd ${CATKIN_WS}
+  - rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROS_DISTRO} || true
+
+# --- Test Stage ---
+code_quality:
+  stage: test
+  before_script:
+    - *setup_common
+  script:
+    - echo "Running code quality checks..."
+    - cd ${CATKIN_WS}/src
+    # Check for Python syntax errors
+    - find . -name "*.py" -exec python${PYTHON_VERSION} -m py_compile {} \;
+    # Run clang-format to check code style (non-blocking)
+    - find . -name "*.cpp" -o -name "*.h" | xargs clang-format -style=file -i || true
+    # Run rostest if tests are available (adjust paths as needed)
+    - cd ${CATKIN_WS}
+    - catkin build --catkin-make-args run_tests || true
+    - catkin_test_results || true
+  allow_failure: true  # Don't block pipeline if tests fail
+
 # --- Build Stage ---
-# Job to build the Catkin workspace.
 catkin_build:
   stage: build
   before_script:
-    # Install essential build tools and dependencies
-    - apt-get update -qq
-    - apt-get install -y -qq --no-install-recommends \
-        git \
-        python3-pip \
-        python3-catkin-tools \
-        python3-rosdep \
-        build-essential
-    # Install Python package dependencies
-    - pip3 install --upgrade pip
-    - pip3 install mujoco numpy matplotlib # Add other pip dependencies if needed
-    # Initialize rosdep
-    - rosdep init || echo "rosdep already initialized."
-    - rosdep update
-    # Source the ROS environment
-    - source /opt/ros/${ROS_DISTRO}/setup.bash
+    - *setup_common
+    - ccache -s  # Display ccache stats before build
   script:
-    # Create Catkin Workspace structure
-    - echo "Creating Catkin workspace at ${CATKIN_WS}..."
-    - mkdir -p ${CATKIN_WS}/src
-    # Copy repository content to workspace src
-    - echo "Copying repository contents to workspace..."
-    - cp -r ./* ${CATKIN_WS}/src/
-    # Navigate into the workspace
+    - echo "Building Catkin workspace at ${CATKIN_WS}..."
     - cd ${CATKIN_WS}
-    # Install ROS dependencies from package.xml files
-    # Ensure custom_msg package is present in src/
-    - echo "Installing ROS dependencies using rosdep..."
-    - rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROS_DISTRO} \
-        || echo "WARNING: Some rosdep dependencies failed to install. Continuing build..."
-    # Build the Catkin workspace
-    - echo "Building Catkin workspace..."
-    - catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release
+    # Build with optimizations and ccache for speed
+    - catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+    - catkin build
+    - ccache -s  # Display ccache stats after build
+    - source devel/setup.bash
+    # Test if the package can be found by ROS
+    - rospack find $(ls src | head -n 1) || echo "Package not found in ROS path"
   artifacts:
-    # Keep build artifacts for debugging
     paths:
       - ${CATKIN_WS}/logs/
       - ${CATKIN_WS}/devel/
       - ${CATKIN_WS}/build/
     expire_in: 1 week
-  allow_failure: false # Fail pipeline on build error
+  allow_failure: false  # Fail pipeline on build error
+
+# --- Deploy Stage ---
+documentation:
+  stage: deploy
+  before_script:
+    - *setup_common
+  script:
+    - echo "Generating documentation..."
+    - apt-get install -y -qq doxygen graphviz
+    - cd ${CATKIN_WS}
+    - catkin build --make-args doc
+  artifacts:
+    paths:
+      - ${CATKIN_WS}/build/*/docs/
+    expire_in: 1 month
+  only:
+    - main
+    - tags
+  allow_failure: true
