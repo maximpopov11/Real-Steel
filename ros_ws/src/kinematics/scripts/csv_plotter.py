@@ -18,7 +18,7 @@ class JointAnglePlotter:
         self.timestamps = []
         self.joint_angles = {'left': [], 'right': []}
         self.joint_names = {'left': [], 'right': []}
-        self.MAX_SPEED_THRESHOLD = 32.0
+        self.MAX_SPEED_THRESHOLD = 1.0
         self.read_csv()
         self.plot_joint_data()
 
