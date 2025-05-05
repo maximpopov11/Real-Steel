@@ -848,9 +848,9 @@
             <inertia ixx="0.00010099485234748" ixy="0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -859,7 +859,7 @@
         <collision>
             <origin xyz="0.07 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
         </collision>
     </link>
@@ -1078,18 +1078,18 @@
             <inertia ixx="0.00010099485234748" ixy="-0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="-0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
         <collision>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
         </collision>
     </link>
