@@ -5,6 +5,7 @@ import csv
 import matplotlib.pyplot as plt
 import os
 import sys
+from kin_util import SPEED_THRESHOLD
 
 class JointAnglePlotter:
     def __init__(self, input_filename):
@@ -18,7 +19,7 @@ class JointAnglePlotter:
         self.timestamps = []
         self.joint_angles = {'left': [], 'right': []}
         self.joint_names = {'left': [], 'right': []}
-        self.MAX_SPEED_THRESHOLD = 32.0
+        self.MAX_SPEED_THRESHOLD = 1.0
         self.read_csv()
         self.plot_joint_data()
 
@@ -84,8 +85,8 @@ class JointAnglePlotter:
 
         fig, ax = plt.subplots(figsize=(10, 5))
         ax.plot(speed_times, speeds, color='orange', label='Joint Speed')
-        ax.axhline(y=self.MAX_SPEED_THRESHOLD, color='red', linestyle='--', 
-                  label=f'Max Threshold ({self.MAX_SPEED_THRESHOLD} rad/s)')
+        ax.axhline(y=self.SPEED_THRESHOLD, color='red', linestyle='--', 
+                  label=f'Max Threshold ({self.SPEED_THRESHOLD} rad/s)')
         ax.set_title(f'{joint_name} Speed vs Time')
         ax.set_xlabel('Time (s)')
         ax.set_ylabel('Speed (rad/s)')
