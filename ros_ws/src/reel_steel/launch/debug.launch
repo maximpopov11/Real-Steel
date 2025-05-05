@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find landmarks)/launch/landmarks.launch"/>
+  <include file="$(find preprocessing)/launch/preprocessing.launch"/>
+  <include file="$(find kinematics)/launch/kinematics.launch"/>
+  <include file="$(find simulator)/launch/simulator.launch"/>
+  <include file="$(find graph_points)/launch/graph_points.launch"/>
+</launch>
