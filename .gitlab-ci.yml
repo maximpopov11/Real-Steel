@@ -62,4 +62,8 @@ test_ros:
     - catkin_test_results || echo "Test results processing failed"
     # Run a simple ROS node check
     - echo "Checking for ROS nodes:"
-    - find ${CATKIN_WS}/src -type f -executable -not -path "*/\.*" | xargs -I{} bash -c 'if head -n 1 "{}" | grep -q "python\|bash"; then echo "Found executable: {}"; fi'
+    - |
+      find ${CATKIN_WS}/src -type f -executable -not -path "*/\.*" | xargs -I{} bash -c '
+      if head -n 1 "{}" | grep -q "python\|bash"; then
+        echo "Found executable: {}";
+      fi'
