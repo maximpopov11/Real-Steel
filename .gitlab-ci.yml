@@ -1,101 +1,65 @@
 stages:
-  - test
+  - lint
   - build
-  - deploy
+  - test
 
-# Define variables
 variables:
   ROS_DISTRO: noetic
   CATKIN_WS: $CI_PROJECT_DIR/ros_ws
-  PYTHON_VERSION: "3"
   DEBIAN_FRONTEND: noninteractive
 
-# Use an official ROS Docker image
-image: ros:${ROS_DISTRO}-robot
+# Use the GitLab runner's Docker executor with the ROS image
+image: ros:${ROS_DISTRO}
 
-# Cache pip packages to speed up builds
+# Cache for faster builds
 cache:
   paths:
     - ~/.cache/pip/
 
-# Common setup commands used across jobs
-.setup_common: &setup_common
-  - apt-get update -qq && apt-get install -y -qq --no-install-recommends \
-      git \
-      python${PYTHON_VERSION}-pip \
-      python${PYTHON_VERSION}-catkin-tools \
-      python${PYTHON_VERSION}-rosdep \
-      build-essential \
-      ccache \
-      clang-format \
-      clang-tidy
-  - pip${PYTHON_VERSION} install --upgrade pip
-  - if [ -f requirements.txt ]; then pip${PYTHON_VERSION} install -r requirements.txt; fi
-  - rosdep init || echo "rosdep already initialized."
-  - rosdep update
-  - source /opt/ros/${ROS_DISTRO}/setup.bash
-  - mkdir -p ${CATKIN_WS}/src
-  - cp -r ./* ${CATKIN_WS}/src/
-  - cd ${CATKIN_WS}
-  - rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROS_DISTRO} || true
-
-# --- Test Stage ---
-code_quality:
-  stage: test
-  before_script:
-    - *setup_common
+lint:
+  stage: lint
   script:
-    - echo "Running code quality checks..."
-    - cd ${CATKIN_WS}/src
-    # Check for Python syntax errors
-    - find . -name "*.py" -exec python${PYTHON_VERSION} -m py_compile {} \;
-    # Run clang-format to check code style (non-blocking)
-    - find . -name "*.cpp" -o -name "*.h" | xargs clang-format -style=file -i || true
-    # Run rostest if tests are available (adjust paths as needed)
-    - cd ${CATKIN_WS}
-    - catkin build --catkin-make-args run_tests || true
-    - catkin_test_results || true
-  allow_failure: true  # Don't block pipeline if tests fail
+    - apt-get update -q && apt-get install -y python3-pip
+    - pip3 install flake8
+    - find ${CI_PROJECT_DIR} -name "*.py" | xargs flake8 --max-line-length=120 || echo "Linting issues found, but continuing"
+  allow_failure: true  # Don't block the pipeline if linting fails
 
-# --- Build Stage ---
-catkin_build:
+build_ros:
   stage: build
-  before_script:
-    - *setup_common
-    - ccache -s  # Display ccache stats before build
   script:
-    - echo "Building Catkin workspace at ${CATKIN_WS}..."
+    - apt-get update -q && apt-get install -y python3-pip python3-catkin-tools build-essential git
+    - if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+    # ROS setup
+    - source /opt/ros/${ROS_DISTRO}/setup.bash
+    # Initialize rosdep if needed
+    - rosdep update || (rosdep init && rosdep update)
+    # Build the workspace
     - cd ${CATKIN_WS}
-    # Build with optimizations and ccache for speed
-    - catkin config --extend /opt/ros/${ROS_DISTRO} --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
-    - catkin build
-    - ccache -s  # Display ccache stats after build
-    - source devel/setup.bash
-    # Test if the package can be found by ROS
-    - rospack find $(ls src | head -n 1) || echo "Package not found in ROS path"
+    - rosdep install --from-paths src --ignore-src -r -y || true
+    - catkin_make
   artifacts:
     paths:
-      - ${CATKIN_WS}/logs/
       - ${CATKIN_WS}/devel/
       - ${CATKIN_WS}/build/
-    expire_in: 1 week
-  allow_failure: false  # Fail pipeline on build error
+    expire_in: 1 day
 
-# --- Deploy Stage ---
-documentation:
-  stage: deploy
-  before_script:
-    - *setup_common
+test_ros:
+  stage: test
+  dependencies:
+    - build_ros
   script:
-    - echo "Generating documentation..."
-    - apt-get install -y -qq doxygen graphviz
+    - apt-get update -q && apt-get install -y python3-pip
+    - if [ -f requirements.txt ]; then pip3 install -r requirements.txt; fi
+    # Source ROS and the built workspace
+    - source /opt/ros/${ROS_DISTRO}/setup.bash
+    - source ${CATKIN_WS}/devel/setup.bash
+    # List available packages
+    - echo "Checking ROS packages:"
+    - rospack list | grep ${CATKIN_WS} || echo "No packages found"
+    # Run ROS tests if they exist
     - cd ${CATKIN_WS}
-    - catkin build --make-args doc
-  artifacts:
-    paths:
-      - ${CATKIN_WS}/build/*/docs/
-    expire_in: 1 month
-  only:
-    - main
-    - tags
-  allow_failure: true
+    - catkin_make run_tests || echo "No tests or some tests failed"
+    - catkin_test_results || echo "Test results processing failed"
+    # Run a simple ROS node check
+    - echo "Checking for ROS nodes:"
+    - find ${CATKIN_WS}/src -type f -executable -not -path "*/\.*" | xargs -I{} bash -c 'if head -n 1 "{}" | grep -q "python\|bash"; then echo "Found executable: {}"; fi'
