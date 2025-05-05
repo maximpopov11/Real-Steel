@@ -4,7 +4,7 @@ stages:
 # Define variables
 variables:
   ROS_DISTRO: noetic                     # Specify the ROS distribution
-  CATKIN_WS: $CI_PROJECT_DIR/catkin_ws  # Define the path for the Catkin workspace
+  CATKIN_WS: $CI_PROJECT_DIR/ros_ws      # Define the path for the Catkin workspace (Updated)
 
 # Use an official ROS Docker image
 image: ros:${ROS_DISTRO}-robot
@@ -32,16 +32,20 @@ catkin_build:
     - source /opt/ros/${ROS_DISTRO}/setup.bash
   script:
     # Create Catkin Workspace structure
+    - echo "Creating Catkin workspace at ${CATKIN_WS}..."
     - mkdir -p ${CATKIN_WS}/src
     # Copy repository content to workspace src
+    - echo "Copying repository contents to workspace..."
     - cp -r ./* ${CATKIN_WS}/src/
     # Navigate into the workspace
     - cd ${CATKIN_WS}
     # Install ROS dependencies from package.xml files
     # Ensure custom_msg package is present in src/
+    - echo "Installing ROS dependencies using rosdep..."
     - rosdep install --from-paths src --ignore-src -r -y --rosdistro ${ROS_DISTRO} \
         || echo "WARNING: Some rosdep dependencies failed to install. Continuing build..."
     # Build the Catkin workspace
+    - echo "Building Catkin workspace..."
     - catkin build --cmake-args -DCMAKE_BUILD_TYPE=Release
   artifacts:
     # Keep build artifacts for debugging
