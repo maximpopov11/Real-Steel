@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import rospy
+import rospkg
 import csv
 import math
 from custom_msg.msg import Angles
@@ -26,7 +28,20 @@ right_arm_joint_names = [
 
 class CsvWriterNode:
     def __init__(self, output_filename):
-        self.output_filename = output_filename
+        self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
+        rospack = rospkg.RosPack()
+        pkg_path = rospack.get_path('kinematics')
+        
+        # Create default path if empty
+        if not output_filename:
+            output_filename = os.path.join(pkg_path, "output", "angles.csv")
+        
+        # Resolve absolute path
+        self.output_filename = os.path.abspath(output_filename)
+        
+        # Create directory if needed
+        output_dir = os.path.dirname(self.output_filename)
+        os.makedirs(output_dir, exist_ok=True)
         self.file = open(self.output_filename, 'w')
         self.writer = csv.writer(self.file)
         headers = ['timestamp']
@@ -99,7 +114,8 @@ class CsvWriterNode:
 
 def main():
     rospy.init_node('robot_csv')
-    output_filename = rospy.get_param('~output_file', 'angles.csv')
+    # Get the output filename from the parameter server. Default: 'angles.csv'
+    output_filename = rospy.get_param('~output_file', '')
     csv_node = CsvWriterNode(output_filename)
     rospy.on_shutdown(csv_node.shutdown_hook)
     rospy.spin()
