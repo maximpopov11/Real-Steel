@@ -93,6 +93,6 @@ deploy:
   image: alpine
   script:
     - echo "Deploying application..."
-  # only:
-  #   - main
-  # when: manual
+  only:
+    - main
+  when: manual
