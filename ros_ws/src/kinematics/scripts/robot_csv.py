@@ -45,7 +45,6 @@ class CsvWriterNode:
         headers += right_arm_joint_names
         self.writer.writerow(headers)
         rospy.loginfo(f"CSV file '{self.output_filename}' created with headers.")
-  
         
         self.subscriber = rospy.Subscriber('robot_angles', Angles, self.callback)
         rospy.loginfo("Subscribed to 'robot_angles' topic.")
