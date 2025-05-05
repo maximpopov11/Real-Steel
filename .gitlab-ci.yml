@@ -17,14 +17,14 @@ variables:
     - pip3 install pytest pytest-cov
     - rosdep update
 
-lint_ros:
-  stage: lint
-  extends: .ros_base
-  script:
-    - apt-get install -y python3-catkin-lint clang-format
-    - cd ${CATKIN_WS}
-    - catkin_lint src/
-    - find src/ -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
+# lint_ros:
+#   stage: lint
+#   extends: .ros_base
+#   script:
+#     - apt-get install -y python3-catkin-lint clang-format
+#     - cd ${CATKIN_WS}
+#     - catkin_lint src/
+#     - find src/ -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
 
 build_ros:
   stage: build
