@@ -3,7 +3,7 @@
         <visual>
             <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".09" length=".35" />
+                <cylinder radius=".09" length="1" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -12,7 +12,7 @@
         <collision>
             <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".09" length=".35" />
+                <cylinder radius=".09" length="1" />
             </geometry>
         </collision>
         <inertial>
