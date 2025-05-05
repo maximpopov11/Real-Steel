@@ -1,43 +1,72 @@
 from sim_util import *
 
-def setup_ids():
-    """
-    Will find/connect joint id's based on used joint names from left or right arms
-    """
-    # left arm id's
-    for i in range(len(left_arm_joint_names)):
-        id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, left_arm_joint_names[i])
-        if (id != -1):
-            left_actuator_ids.append(id)
-        else:
-            rospy.logerr_once(f"Actuator {left_arm_joint_names[i]} not found in model")
-            return -1      
-    # right arm id's
-    for i in range(len(right_arm_joint_names)):
-        id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, right_arm_joint_names[i])
-        if (id != -1):
-            right_actuator_ids.append(id)
-        else:
-            rospy.logerr_once(f"Actuator {right_arm_joint_names[i]} not found in model")
-            return -1
-    
-def use_angles(msg):
+last_angles = []
+
+left_interpolated_angles = []
+right_interpolated_angles = []
+
+def callback(msg):
+    global last_angles
+    global left_interpolated_angles
+    global right_interpolated_angles
+
+    curr_angles = msg.left_arm + msg.right_arm
+
+    if len(last_angles) <= 0:
+        last_angles = curr_angles
+        left_interpolated_angles.append(msg.left_arm)
+        right_interpolated_angles.append(msg.right_arm)
+        return
+
+    time_diff = 0.1 # fixed ratio between callbacks
+    speed_per_joint = [
+        abs(curr - last) / time_diff
+        for curr, last in zip(curr_angles, last_angles)
+    ]
+
+    max_speed = max(speed_per_joint)
+
+    if max_speed > SPEED_THRESHOLD:
+        required_steps = math.ceil(max_speed / SPEED_THRESHOLD)
+        interpolated = interpolate_points_sim(last_angles, curr_angles, required_steps)
+
+        rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
+
+        for angles in interpolated:
+            left = angles[:5]
+            right = angles[5:]
+
+            left_interpolated_angles.append(left)
+            right_interpolated_angles.append(right)
+
+        last_angles = curr_angles
+    else:
+        left_interpolated_angles.append(msg.left_arm)
+        right_interpolated_angles.append(msg.right_arm)
+
+def use_angles():
     """
     Placeholder for the robot long-term. Use simulator or other systems to visualize the angle output.
     """
     # print(timestamp(), msg)
 
+    if len(left_interpolated_angles) <= 0 or len(right_interpolated_angles) <= 0:
+        return
+
+    output_left = left_interpolated_angles.pop()
+    output_right = right_interpolated_angles.pop()
+
     for i in range(len(left_actuator_ids)):
-        target_angle = msg.left_arm[i]
+        target_angle = output_left[i]
         data.ctrl[left_actuator_ids[i]] = target_angle
 
     for i in range(len(right_actuator_ids)):
-        target_angle = msg.right_arm[i]
+        target_angle = output_right[i]
         data.ctrl[right_actuator_ids[i]] = target_angle
 
-    
+
 def app():
-    sub = rospy.Subscriber('robot_angles', Angles, use_angles)
+    sub = rospy.Subscriber('robot_angles', Angles, callback)
     rospy.init_node('simulator', anonymous=False)
 
     # if id's of joints are not found exit simulation
@@ -47,7 +76,7 @@ def app():
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
         # refresh rate for sim
-        rate = rospy.Rate(10) # 60 Hz refresh
+        rate = rospy.Rate(10) # 10 Hz refresh
 
         viewer.cam.lookat[:] = np.array([0.0, 0.0, 0.75])   # camera looking at
         viewer.cam.distance = 2.0                           # how far is camera from lookat
@@ -62,8 +91,12 @@ def app():
             # with viewer.lock():
                 # viewer.opt.flags[mujoco.mjtVisFlag.mjVIS_CONTACTPOINT] = int(data.time % 2)
 
+            use_angles()
+
             # sync viewer to display updated sim
             viewer.sync()
+
+            rate.sleep()
 
         rospy.signal_shutdown("Simulation Exiting")
 
