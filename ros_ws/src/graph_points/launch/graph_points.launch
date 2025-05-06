@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="graph_points" type="main.py" name="graph_points_node" output="screen"/>
+</launch>

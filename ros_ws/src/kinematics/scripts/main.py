@@ -22,7 +22,7 @@ def generate_angles(msg):
 
     # computation is done through a ROS service
     rospy.wait_for_service("compute_ik")
-    
+
     # Assume the points are preprocessed and relative to the midpoint of the hips
     # Get a position position request and set it up for the right arm and hand
     # This should be updated to make one request for both left and right arms simultaneously.
@@ -57,7 +57,7 @@ def generate_angles(msg):
     try:
         right_response = compute_ik(right_request)
         left_response = compute_ik(left_request)
-    except ValueError: 
+    except ValueError:
         print("ValueError!")
     lt = left_request.ik_request.pose_stamped.pose.position
     rt = right_request.ik_request.pose_stamped.pose.position
@@ -66,10 +66,10 @@ def generate_angles(msg):
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
         ### SET Time???? ###
-        # msg.header = Header(stamp=rospy.Time.now(), frame_id="your_frame_id") 
+        # msg.header = Header(stamp=rospy.Time.now(), frame_id="your_frame_id")
         # the returned position field is a 3-tuple; we need it to be a list. Also cropping out just the 4 angles we  want
-        angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0]
-        angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0]
+        angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0, 0]
+        angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0, 0]
         pub.publish(angles_msg)
         after_ts = timestamp()
        #rospy.loginfo(f"({after_ts - before_ts}ms): Angles Left: {angles_msg.left_arm} Right: {angles_msg.right_arm}")

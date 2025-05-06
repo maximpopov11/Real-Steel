@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="landmarks" type="main.py" name="pose_detection" output="screen">
+        <param name="combined" value="true"/>
+    </node>
+</launch>
