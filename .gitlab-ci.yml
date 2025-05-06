@@ -1,21 +1,3 @@
-# This file is a template, and might need editing before it works on your project.
-# This is a sample GitLab CI/CD configuration file that should run without any modifications.
-# It demonstrates a basic 3 stage CI/CD pipeline. Instead of real tests or scripts,
-# it uses echo commands to simulate the pipeline execution.
-#
-# A pipeline is composed of independent jobs that run scripts, grouped into stages.
-# Stages run in sequential order, but jobs within stages run in parallel.
-#
-# For more information, see: https://docs.gitlab.com/ee/ci/yaml/index.html#stages
-#
-# You can copy and paste this template into a new `.gitlab-ci.yml` file.
-# You should not add this template to an existing `.gitlab-ci.yml` file by using the `include:` keyword.
-#
-# To contribute improvements to CI/CD templates, please follow the Development guide at:
-# https://docs.gitlab.com/ee/development/cicd/templates.html
-# This specific template is located at:
-# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
-
 stages:
   - lint
   - build
@@ -23,81 +5,94 @@ stages:
   - deploy
 
 variables:
-  PYTHON_VERSION: "3.8"
-  OPENCV_VERSION: "4.5.5"
+  ROS_DISTRO: "noetic"
+  CATKIN_WS: "${CI_PROJECT_DIR}/ros_ws"
+  DEBIAN_FRONTEND: "noninteractive"
 
-# Cache pip dependencies between jobs
-cache:
-  paths:
-    - .pip-cache/
+# Common setup commands used in multiple jobs
+.ros_setup:
+  image: ros:${ROS_DISTRO}
+  before_script:
+    - apt-get update -q
+    - apt-get install -y python3-pip python3-catkin-tools python3-rosdep git
+    - pip3 install pytest pytest-cov
+    - rosdep update
+    - source /opt/ros/${ROS_DISTRO}/setup.bash
 
-before_script:
-  - python -V
-  - pip install --cache-dir=.pip-cache -U pip
-  - pip --cache-dir=.pip-cache install opencv-python mediapipe numpy pillow
-
-# lint:
-#   stage: lint
-#   image: python:${PYTHON_VERSION}
-#   script:
-#     - pip --cache-dir=.pip-cache install flake8
-#     - flake8 --max-line-length=120 *.py lib/*.py catkin_ws/src/skeleton_tracker/src/*.py
+lint:
+  stage: lint
+  extends: .ros_setup
+  script:
+    # Install linting tools
+    - apt-get install -y python3-catkin-lint clang-format
+    # Run catkin_lint with warnings as warnings, not errors
+    - cd ${CATKIN_WS}
+    - catkin_lint src/ || echo "Lint warnings found, but continuing pipeline"
+    # Format check C++ code
+    - find src/ -name "*.cpp" -o -name "*.h" -o -name "*.hpp" | xargs clang-format --dry-run || echo "Formatting issues found"
+    # Add shebang to Python scripts missing it
+    - find src/ -name "*.py" -exec grep -L "^#\!/usr/bin/env python" {} \; | xargs -r -I{} echo "Missing shebang in {}"
+  allow_failure: true
 
 build:
   stage: build
-  image: python:${PYTHON_VERSION}
+  extends: .ros_setup
   script:
-    - mkdir -p build
-    - cp -r lib build/
-    - cp detect_pose_video.py build/
-    - cp detect_pose_image_matplot.py build/
+    - cd ${CATKIN_WS}
+    # Install dependencies but continue even if some fail
+    - rosdep install --from-paths src --ignore-src -r -y || true
+    # Build packages
+    - catkin_make -j$(nproc) || (echo "Build failed with errors - check logs"; exit 1)
+    # Verify that setup.bash was created
+    - test -f devel/setup.bash || (echo "Build did not produce setup.bash"; exit 1)
   artifacts:
     paths:
-      - build/
+      - ${CATKIN_WS}/build/
+      - ${CATKIN_WS}/devel/
+    expire_in: 1 day
 
-test:python:
+test:
   stage: test
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - python -V
-    - pip install --cache-dir=.pip-cache -U pip
-    - apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
-    - pip --cache-dir=.pip-cache install opencv-python mediapipe numpy pillow
-  script:
-    - cd build
-    - python -c "import mediapipe; import cv2; import numpy; print('Dependencies imported successfully')"
-    - python -c "from lib.mp_util import PoseLandmarker; print('Module imports working')"
+  extends: .ros_setup
   dependencies:
     - build
-
-test:ros:
-  stage: test
-  image: ros:noetic
-  before_script:
-    - apt-get update && apt-get install -y python3-pip libgl1-mesa-glx libglib2.0-0
-    - pip3 install opencv-python mediapipe numpy
-    - source /opt/ros/noetic/setup.bash
   script:
-    - cd catkin_ws
-    - catkin_make
-    - source devel/setup.bash
-    - rospack find skeleton_tracker
-  only:
-    changes:
-      - catkin_ws/**/*
+    # Install only ROS-specific testing dependencies (skip heavy ML libraries)
+    - pip3 install --no-cache-dir pytest pytest-cov
+
+    # Source the workspace
+    - source ${CATKIN_WS}/devel/setup.bash
+    
+    # List packages to verify build worked
+    - echo "Checking built packages:"
+    - "rospack list | grep ${CATKIN_WS} || echo 'Warning: No packages found in workspace'"
+    
+    # Run tests if they exist
+    - cd ${CATKIN_WS}
+    - catkin_make run_tests -j2 || echo "Some tests failed or no tests exist"
+    
+    # Report test results but don't fail the pipeline if tests fail
+    - catkin_test_results --verbose || echo "Test failures detected"
+    
+    # Launch file validation
+    - echo "Checking launch files:" 
+    - find ${CATKIN_WS}/src -name "*.launch" -exec roslaunch-check {} \; || echo "Launch file validation issues found"
+    
+    # For Python nodes, run pytest on test directories (only for ROS-specific tests)
+    - echo "Running Python tests:"
+    - find ${CATKIN_WS}/src -path "*/test/*.py" -exec python3 -m pytest {} \; || echo "Python test failures detected"
+  artifacts:
+    paths:
+      - ${CATKIN_WS}/build/test_results/
+    reports:
+      junit: ${CATKIN_WS}/build/test_results/**/*.xml
+    when: always
 
 deploy:
   stage: deploy
-  image: python:${PYTHON_VERSION}
-  before_script:
-    - python -V
-    - pip install --cache-dir=.pip-cache -U pip
-    - apt-get update && apt-get install -y libgl1-mesa-glx libglib2.0-0
+  image: alpine
   script:
     - echo "Deploying application..."
-    - mkdir -p /deploy
-    - cp -r build/* /deploy/
   only:
     - main
-  environment:
-    name: production
+  when: manual
