@@ -14,7 +14,7 @@ class StateValidityChecker():
         # prepare msg to interface with moveit
         self.robot_state = RobotState()
         self.robot_state.joint_state.name = left_arm_joint_names + right_arm_joint_names
-        self.robot_state.joint_state.position = [0.0 for _ in range(len(self.rs.joint_state.name))]
+        self.robot_state.joint_state.position = [0.0 for _ in range(len(self.robot_state.joint_state.name))]
         
 
     def checkCollision(self):
