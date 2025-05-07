@@ -78,16 +78,15 @@ class CsvWriterNode:
             rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
             interpolated = interpolate_points(self.last_angles, current_angles, required_steps)
             for angles in interpolated:
-                left = angles[:5]
-                right = angles[5:]
+                left = angles[:6]
+                right = angles[6:]
 
                 if not interpolated_angles_valid(angles):
                     rospy.logerr(f"Interpolated angles are invalid:\n{angles}")
                     break
 
                 timestamp = f"{self.time_count:.3f}"
-                row = [timestamp] + left + right # uncomment this normally (for arm with 6 dof)
-                # row = [timestamp] + left + [0] + right + [0] # comment if not using dof of 6
+                row = [timestamp] + left + right
                 self.writer.writerow(row)
                 rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
                 self.time_count += 0.1
