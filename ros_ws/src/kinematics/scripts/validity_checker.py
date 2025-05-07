@@ -7,9 +7,9 @@ from joint_names import left_arm_joint_names, right_arm_joint_names
 class StateValidityChecker():
     def __init__(self):
         # prepare service for collision check
-        self.sv_srv = rospy.ServiceProxy('/check_state_validity', GetStateValidity)
+        self.service = rospy.ServiceProxy('/check_state_validity', GetStateValidity)
         # wait for service to become available
-        self.sv_srv.wait_for_service()
+        self.service.wait_for_service()
         rospy.loginfo('service is avaiable')
         # prepare msg to interface with moveit
         self.robot_state = RobotState()
@@ -44,5 +44,4 @@ class StateValidityChecker():
         gsvr.group_name = group_name
         if constraints != None:
             gsvr.constraints = constraints
-        result = self.sv_srv.call(gsvr)
-        return result.valid
+        return self.service.call(gsvr).valid

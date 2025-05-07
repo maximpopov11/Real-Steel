@@ -82,7 +82,7 @@ class CsvWriterNode:
                 right = angles[5:]
 
                 if not interpolated_angles_valid(angles):
-                    rospy.logerr(f"err: interpolated angles are invalid:\n{angles}")
+                    rospy.logerr(f"Interpolated angles are invalid:\n{angles}")
                     break
 
                 timestamp = f"{self.time_count:.3f}"
