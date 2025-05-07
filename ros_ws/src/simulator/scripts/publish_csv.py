@@ -15,8 +15,8 @@ def app(filereader):
     rate = rospy.Rate(WAIT_HERTZ)
     for row in filereader:
         angles_msg = Angles()
-        angles_msg.left_arm = [x for x in row[1:7]]
-        angles_msg.right_arm = [x for x in row[7:]]
+        angles_msg.left_arm = [float(x) for x in row[1:7]]
+        angles_msg.right_arm = [float(x) for x in row[7:]]
 
         pub.publish(angles_msg)
         rate.sleep()
