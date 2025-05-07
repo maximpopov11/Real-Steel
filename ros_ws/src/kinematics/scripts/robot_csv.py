@@ -12,11 +12,8 @@ validity_checker = StateValidityChecker()
 
 def interpolated_angles_valid(angles):
     validity_checker.setJointStates(angles)
-    return (
-        validity_checker.getStateValidity('left_arm') 
-        and 
-        validity_checker.getStateValidity('right_arm')
-    )
+    return validity_checker.getStateValidity('left_arm') and validity_checker.getStateValidity('right_arm')
+    
 
 class CsvWriterNode:
     def __init__(self, output_filename):
