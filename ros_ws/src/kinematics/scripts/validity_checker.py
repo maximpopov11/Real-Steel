@@ -1,7 +1,7 @@
 import rospy
 from moveit_msgs.srv import GetStateValidityRequest, GetStateValidity
 from moveit_msgs.msg import RobotState
-from joint_names import left_arm_joint_names, right_arm_joint_names
+from kin_util import left_arm_joint_names, right_arm_joint_names
 
 
 class StateValidityChecker():

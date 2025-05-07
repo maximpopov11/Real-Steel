@@ -4,8 +4,7 @@ import rospkg
 import csv
 import math
 from custom_msg.msg import Angles
-from kin_util import SPEED_THRESHOLD, interpolate_points
-from joint_names import left_arm_joint_names, right_arm_joint_names
+from kin_util import SPEED_THRESHOLD, interpolate_points, left_arm_joint_names, right_arm_joint_names
 from validity_checker import StateValidityChecker
 
 validity_checker = StateValidityChecker()
