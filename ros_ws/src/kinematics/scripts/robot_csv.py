@@ -7,24 +7,18 @@ import csv
 import math
 from custom_msg.msg import Angles
 from kin_util import SPEED_THRESHOLD, interpolate_points
+from joint_names import left_arm_joint_names, right_arm_joint_names
+from validity_checker import StateValidityChecker
 
-left_arm_joint_names = [
-    "left_shoulder_pitch_joint",
-    "left_shoulder_roll_joint",
-    "left_shoulder_yaw_joint",
-    "left_elbow_joint",
-    "left_wrist_roll_joint",
-    "left_wrist_pitch_joint"
-]
+validity_checker = StateValidityChecker()
 
-right_arm_joint_names = [
-    "right_shoulder_pitch_joint",
-    "right_shoulder_roll_joint",
-    "right_shoulder_yaw_joint",
-    "right_elbow_joint",
-    "right_wrist_roll_joint",
-    "right_wrist_pitch_joint"
-]
+def interpolated_angles_valid(angles):
+    validity_checker.setJointStates(angles)
+    return (
+        validity_checker.getStateValidity('left_arm') 
+        and 
+        validity_checker.getStateValidity('right_arm')
+    )
 
 class CsvWriterNode:
     def __init__(self, output_filename):
@@ -91,6 +85,11 @@ class CsvWriterNode:
             for angles in interpolated:
                 left = angles[:5]
                 right = angles[5:]
+
+                if not interpolated_points_valid(angles):
+                    rospy.logerr(f"err: interpolated angles are invalid:\n{angles}")
+                    break
+
                 timestamp = f"{self.time_count:.3f}"
                 row = [timestamp] + left + right # uncomment this normally (for arm with 6 dof)
                 # row = [timestamp] + left + [0] + right + [0] # comment if not using dof of 6
