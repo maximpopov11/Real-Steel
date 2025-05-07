@@ -45,4 +45,4 @@ class StateValidityChecker():
         if constraints != None:
             gsvr.constraints = constraints
         result = self.sv_srv.call(gsvr)
-        return result
+        return result.valid
