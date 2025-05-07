@@ -29,7 +29,7 @@ class StateValidityChecker():
 
     def setJointStates(self, joint_angles):
         '''
-        Update robot state
+        Update robot state, left arms first and then right arms as ordered in kinematics/joint_names.py
         '''
         self.robot_state.joint_state.position = joint_angles
 
