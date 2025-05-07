@@ -84,7 +84,7 @@ class CsvWriterNode:
                 left = angles[:5]
                 right = angles[5:]
 
-                if not interpolated_points_valid(angles):
+                if not interpolated_angles_valid(angles):
                     rospy.logerr(f"err: interpolated angles are invalid:\n{angles}")
                     break
 
