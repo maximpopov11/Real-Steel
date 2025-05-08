@@ -33,8 +33,8 @@ def callback(msg):
         rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
 
         for angles in interpolated:
-            left = angles[:5]
-            right = angles[5:]
+            left = angles[:6]
+            right = angles[6:]
 
             left_interpolated_angles.append(left)
             right_interpolated_angles.append(right)
