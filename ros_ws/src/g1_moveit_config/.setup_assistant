@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: ""
+    relative_path: /home/isaaclo/sd15_reel-steel/ros_ws/src/g1_moveit_config/g1_29dof_rev_1_0.urdf
+    xacro_args: ""
+  SRDF:
+    relative_path: config/g1_29dof_rev_1_0.srdf
+  CONFIG:
+    author_name: Isaac Lo
+    author_email: isaaclo@iastate.edu
+    generated_timestamp: 1746658425
