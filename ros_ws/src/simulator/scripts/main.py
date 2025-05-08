@@ -5,6 +5,18 @@ last_angles = []
 left_interpolated_angles = []
 right_interpolated_angles = []
 
+def reached(curr_angles):
+    global last_angles
+    if len(curr_angles) != len(last_angles):
+        return False
+    
+    for curr, last in zip(curr_angles, last_angles):
+        if abs(curr - last) > REACH_THRESHOLD:
+            return False
+        
+    return True
+    
+
 def callback(msg):
     global last_angles
     global left_interpolated_angles
@@ -16,6 +28,12 @@ def callback(msg):
         last_angles = curr_angles
         left_interpolated_angles.append(msg.left_arm)
         right_interpolated_angles.append(msg.right_arm)
+        return
+    
+    if reached(curr_angles):
+        left_interpolated_angles.clear()
+        right_interpolated_angles.clear()
+        print(f"Reached target angles: {curr_angles}")
         return
 
     time_diff = 0.1 # fixed ratio between callbacks
@@ -30,11 +48,11 @@ def callback(msg):
         required_steps = math.ceil(max_speed / SPEED_THRESHOLD)
         interpolated = interpolate_points_sim(last_angles, curr_angles, required_steps)
 
-        rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
+        # rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
 
         for angles in interpolated:
-            left = angles[:5]
-            right = angles[5:]
+            left = angles[:6]
+            right = angles[6:]
 
             left_interpolated_angles.append(left)
             right_interpolated_angles.append(right)
@@ -63,6 +81,8 @@ def use_angles():
     for i in range(len(right_actuator_ids)):
         target_angle = output_right[i]
         data.ctrl[right_actuator_ids[i]] = target_angle
+
+    print(f"Remaining frames: {len(left_interpolated_angles)}")
 
 
 def app():
