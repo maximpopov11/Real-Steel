@@ -13,7 +13,8 @@ class StateValidityChecker():
         rospy.loginfo('service is avaiable')
         # prepare msg to interface with moveit
         self.robot_state = RobotState()
-        self.robot_state.joint_state.name = left_arm_joint_names + right_arm_joint_names
+        # we don't want the two fixed joints at the end of the arms
+        self.robot_state.joint_state.name = left_arm_joint_names[:-2] + right_arm_joint_names[:-2]
         self.robot_state.joint_state.position = [0.0 for _ in range(len(self.robot_state.joint_state.name))]
         
 
