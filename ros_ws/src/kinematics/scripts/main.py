@@ -10,7 +10,7 @@ SUCCESS_CODE = 1
 validity_checker = StateValidityChecker()
 def angles_valid(angles):
     validity_checker.setJointStates(angles)
-    return validity_checker.getStateValidity()
+    return validity_checker.getStateValidity('left_arm') and validity_checker.getStateValidity('right_arm')
 
 pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
 compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
