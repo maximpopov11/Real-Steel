@@ -10,7 +10,9 @@ from validity_checker import StateValidityChecker
 validity_checker = StateValidityChecker()
 
 def interpolated_angles_valid(angles):
-    validity_checker.setJointStates(angles)
+    left, right = angles[:5], angles[-6:-2]
+    used_joints = left + right
+    validity_checker.setJointStates(used_joints)
     return validity_checker.getStateValidity('left_arm') and validity_checker.getStateValidity('right_arm')
     
 
@@ -85,7 +87,7 @@ class CsvWriterNode:
                 self.writer.writerow(row)
                 rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
                 self.time_count += 0.1
-                self.last_angles = joint_state
+            self.last_angles = joint_state
         else:
             timestamp = f"{self.time_count:.3f}"
             row = [timestamp] + current_angles

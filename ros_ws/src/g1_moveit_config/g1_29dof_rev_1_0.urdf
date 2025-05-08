@@ -1,18 +1,18 @@
 <robot name="g1_29dof_rev_1_0">
     <link name="safe_zone_above_link">
         <visual>
-            <origin xyz="0 0 .3" rpy="0 0 0" />
+            <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".12" length=".9"/>
+                <cylinder radius=".09" length=".4"/>
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
             </material>
         </visual>
         <collision>
-            <origin xyz="0 0 .3" rpy="0 0 0" />
+            <origin xyz="0 0 .5" rpy="0 0 0" />
             <geometry>
-                <cylinder radius=".12" length=".9"/>
+                <cylinder radius=".09" length=".4"/>
             </geometry>
         </collision>
     </link>
@@ -22,7 +22,7 @@
     </joint>
     <link name="safe_zone_behind_link">
         <visual>
-            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <origin xyz="-.4 0 0" rpy="0 0 0" />
             <geometry>
                 <box size=".01 2 2" />
             </geometry>
@@ -31,7 +31,7 @@
             </material>
         </visual>
         <collision>
-            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <origin xyz="-.4 0 0" rpy="0 0 0" />
             <geometry>
                 <box size=".01 2 2" />
             </geometry>

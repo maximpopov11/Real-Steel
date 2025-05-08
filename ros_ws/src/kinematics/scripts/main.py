@@ -2,7 +2,6 @@ import sys
 import rospy
 from custom_msg.msg import Landmarks, Angles
 from kin_util import timestamp
-import moveit_commander
 from moveit_commander.conversions import pose_to_list
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionIKResponse
 
@@ -65,14 +64,11 @@ def generate_angles(msg):
     # If the error code is 1 we successfully did IK
     if right_response.error_code.val == 1 and left_response.error_code.val == 1:
         angles_msg = Angles()
-        ### SET Time???? ###
-        # msg.header = Header(stamp=rospy.Time.now(), frame_id="your_frame_id")
         # the returned position field is a 3-tuple; we need it to be a list. Also cropping out just the 4 angles we  want
-        angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0, 0]
-        angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0, 0]
+        angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-4:]] + [0, 0]
+        angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-8:-4]] + [0, 0]
         pub.publish(angles_msg)
         after_ts = timestamp()
-       #rospy.loginfo(f"({after_ts - before_ts}ms): Angles Left: {angles_msg.left_arm} Right: {angles_msg.right_arm}")
         rospy.loginfo(f"ROBOT_COORD_SYS LT: ({lt.x}, {lt.y}, {lt.z}) RT: ({rt.x}, {rt.y}, {rt.z})")
         rospy.loginfo(f"CAMERA_COORD_SYS LT: ({lt.y}, {lt.z}, {lt.x}) RT: ({rt.y}, {rt.z}, {rt.x})")
     else:
