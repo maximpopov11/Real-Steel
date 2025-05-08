@@ -226,13 +226,6 @@
         <parent link="torso_link" />
         <child link="head_link" />
     </joint>
-    <!-- d435 -->
-    <link name="d435_link" />
-    <joint name="d435_joint" type="fixed">
-        <origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0" />
-        <parent link="torso_link" />
-        <child link="d435_link" />
-    </joint>
     <!-- mid360 -->
     <link name="mid360_link" />
     <joint name="mid360_joint" type="fixed">
