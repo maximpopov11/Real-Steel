@@ -56,8 +56,7 @@ class CsvWriterNode:
 
         if self.last_angles is None:
             timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
-            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
+            row = [timestamp] + left_arm + right_arm
             self.writer.writerow(row)
             self.last_angles = current_angles
             self.time_count += 0.1
@@ -75,26 +74,21 @@ class CsvWriterNode:
         if max_speed > SPEED_THRESHOLD:
             required_steps = math.ceil(max_speed / SPEED_THRESHOLD)
             rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
-            interpolated = interpolate_points(self.last_angles, current_angles, required_steps)
-            for angles in interpolated:
-                left = angles[:6]
-                right = angles[6:]
-
-                if not interpolated_angles_valid(angles):
-                    rospy.logerr(f"Interpolated angles are invalid:\n{angles}")
+            interpolated_joint_states = interpolate_points(self.last_angles, current_angles, required_steps)
+            for joint_state in interpolated_joint_states:
+                if not interpolated_angles_valid(joint_state):
+                    rospy.logerr(f"Interpolated angle invalid:\n{joint_state}")
                     break
 
                 timestamp = f"{self.time_count:.3f}"
-                row = [timestamp] + left + right
+                row = [timestamp] + joint_state
                 self.writer.writerow(row)
                 rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
                 self.time_count += 0.1
-            self.last_angles = current_angles
+                self.last_angles = joint_state
         else:
-            # Write current angles
             timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
-            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
+            row = [timestamp] + current_angles
             self.writer.writerow(row)
             rospy.loginfo(f"Recorded angles at {timestamp}")
             self.time_count += 0.1
