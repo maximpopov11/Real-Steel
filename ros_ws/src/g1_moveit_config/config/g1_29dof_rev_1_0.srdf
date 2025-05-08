@@ -29,22 +29,16 @@
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="home" group="right_arm">
-        <joint name="right_elbow_joint" value="-0.75"/>
+        <joint name="right_elbow_joint" value="-0.5"/>
         <joint name="right_shoulder_pitch_joint" value="-1"/>
         <joint name="right_shoulder_roll_joint" value="0"/>
-        <joint name="right_shoulder_yaw_joint" value="0"/>
-        <joint name="right_wrist_pitch_joint" value="0"/>
-        <joint name="right_wrist_roll_joint" value="0"/>
-        <joint name="right_wrist_yaw_joint" value="0"/>
+        <joint name="right_shoulder_yaw_joint" value="-0.1"/>
     </group_state>
     <group_state name="home" group="left_arm">
-        <joint name="left_elbow_joint" value="-0.75"/>
+        <joint name="left_elbow_joint" value="-0.5"/>
         <joint name="left_shoulder_pitch_joint" value="-1"/>
         <joint name="left_shoulder_roll_joint" value="0"/>
-        <joint name="left_shoulder_yaw_joint" value="0"/>
-        <joint name="left_wrist_pitch_joint" value="0"/>
-        <joint name="left_wrist_roll_joint" value="0"/>
-        <joint name="left_wrist_yaw_joint" value="0"/>
+        <joint name="left_shoulder_yaw_joint" value="0.1"/>
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="right_hand" parent_link="right_rubber_hand" group="right_arm"/>
