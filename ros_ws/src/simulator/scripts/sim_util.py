@@ -69,6 +69,7 @@ def timestamp() -> int:
 
 """ For interpolation of points in simulator """
 SPEED_THRESHOLD = 1.0  # radians/s
+REACH_THRESHOLD = 0.05  # radians
 
 def interpolate_points_sim(start_angles, end_angles, num_steps):
     if num_steps <= 0:
