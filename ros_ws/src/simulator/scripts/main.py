@@ -1,4 +1,5 @@
 from sim_util import *
+from sim_validity import StateValidityChecker
 
 last_angles = []
 
@@ -15,7 +16,14 @@ def reached(curr_angles):
             return False
         
     return True
-    
+
+validity_checker = StateValidityChecker()
+
+def interpolate_angles_valid(angles):
+    left, right = angles[:5], angles[-6:2]
+    used_joints = left + right
+    validity_checker.setJointStates(used_joints)
+    return validity_checker.getStateValidity("left_arm") and validity_checker.getStateValidity("right_arm")
 
 def callback(msg):
     global last_angles
@@ -73,6 +81,10 @@ def use_angles():
 
     output_left = left_interpolated_angles.pop()
     output_right = right_interpolated_angles.pop()
+
+    if not interpolate_angles_valid(output_left + output_right):
+        rospy.logerr(f"Invalid interpolated angles: {output_left + output_right}")
+        return
 
     for i in range(len(left_actuator_ids)):
         target_angle = output_left[i]
