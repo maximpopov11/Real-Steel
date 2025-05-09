@@ -10,11 +10,26 @@ from validity_checker import StateValidityChecker
 validity_checker = StateValidityChecker()
 
 def interpolated_angles_valid(angles):
-    validity_checker.setJointStates(angles)
+    left, right = angles[:5], angles[-6:-2]
+    used_joints = left + right
+    validity_checker.setJointStates(used_joints)
     return validity_checker.getStateValidity('left_arm') and validity_checker.getStateValidity('right_arm')
     
 
 class CsvWriterNode:
+    def write_csv_row(self, joint_state):
+        if not interpolated_angles_valid(joint_state):
+            rospy.logerr(f"Interpolated angle invalid:\n{joint_state}")
+            return
+
+        timestamp = f"{self.time_count:.3f}"
+        row = [timestamp] + joint_state
+
+        self.writer.writerow(row)
+        self.time_count += 0.1
+        self.last_angles = joint_state
+        rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
+
     def __init__(self, output_filename):
         self.SPEED_THRESHOLD = SPEED_THRESHOLD  # rad/s
         rospack = rospkg.RosPack()
@@ -56,14 +71,14 @@ class CsvWriterNode:
 
         if self.last_angles is None:
             timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
-            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
+            row = [timestamp] + left_arm + right_arm
             self.writer.writerow(row)
             self.last_angles = current_angles
             self.time_count += 0.1
             rospy.loginfo(f"Recorded initial angles at {timestamp}")
             return
-        # Calculate angular speed for each joint (rad/s)
+
+        # angular speed for each joint (rad/s)
         time_diff = 0.1  # Fixed time step between callbacks
         speed_per_joint = [
             abs(curr - last) / time_diff
@@ -72,33 +87,16 @@ class CsvWriterNode:
 
         max_speed = max(speed_per_joint)
 
-        if max_speed > SPEED_THRESHOLD:
-            required_steps = math.ceil(max_speed / SPEED_THRESHOLD)
-            rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
-            interpolated = interpolate_points(self.last_angles, current_angles, required_steps)
-            for angles in interpolated:
-                left = angles[:6]
-                right = angles[6:]
+        if max_speed < SPEED_THRESHOLD:
+            self.write_csv_row(current_angles)
+            return
 
-                if not interpolated_angles_valid(angles):
-                    rospy.logerr(f"Interpolated angles are invalid:\n{angles}")
-                    break
+        required_steps = math.ceil(max_speed / SPEED_THRESHOLD)
+        rospy.loginfo(f"Max speed {max_speed:.2f} rad/s exceeds threshold. Interpolating {required_steps} steps.")
 
-                timestamp = f"{self.time_count:.3f}"
-                row = [timestamp] + left + right
-                self.writer.writerow(row)
-                rospy.loginfo(f"Recorded interpolated angles at {timestamp}")
-                self.time_count += 0.1
-            self.last_angles = current_angles
-        else:
-            # Write current angles
-            timestamp = f"{self.time_count:.3f}"
-            row = [timestamp] + left_arm + right_arm # uncomment this normally (for arm with 6 dof)
-            # row = [timestamp] + left_arm + [0] + right_arm + [0] # comment if not using dof of 6
-            self.writer.writerow(row)
-            rospy.loginfo(f"Recorded angles at {timestamp}")
-            self.time_count += 0.1
-            self.last_angles = current_angles
+        interpolated_joint_states = interpolate_points(self.last_angles, current_angles, required_steps)
+        for joint_state in interpolated_joint_states:
+            self.write_csv_row(joint_state)
 
     def shutdown_hook(self):
         self.file.close()

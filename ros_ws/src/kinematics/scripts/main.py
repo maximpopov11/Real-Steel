@@ -1,10 +1,16 @@
-import sys
 import rospy
 from custom_msg.msg import Landmarks, Angles
 from kin_util import timestamp
-import moveit_commander
 from moveit_commander.conversions import pose_to_list
 from moveit_msgs.srv import GetPositionIK, GetPositionIKRequest, GetPositionIKResponse
+from validity_checker import StateValidityChecker
+
+SUCCESS_CODE = 1
+
+validity_checker = StateValidityChecker()
+def angles_valid(angles):
+    validity_checker.setJointStates(angles)
+    return validity_checker.getStateValidity('left_arm') and validity_checker.getStateValidity('right_arm')
 
 pub = rospy.Publisher('robot_angles', Angles, queue_size=10)
 compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
@@ -59,24 +65,27 @@ def generate_angles(msg):
         left_response = compute_ik(left_request)
     except ValueError:
         print("ValueError!")
+
     lt = left_request.ik_request.pose_stamped.pose.position
     rt = right_request.ik_request.pose_stamped.pose.position
 
-    # If the error code is 1 we successfully did IK
-    if right_response.error_code.val == 1 and left_response.error_code.val == 1:
-        angles_msg = Angles()
-        ### SET Time???? ###
-        # msg.header = Header(stamp=rospy.Time.now(), frame_id="your_frame_id")
-        # the returned position field is a 3-tuple; we need it to be a list. Also cropping out just the 4 angles we  want
-        angles_msg.right_arm = [x for x in right_response.solution.joint_state.position[-7:-3]] + [0, 0]
-        angles_msg.left_arm = [x for x in left_response.solution.joint_state.position[-14:-10]] + [0, 0]
-        pub.publish(angles_msg)
-        after_ts = timestamp()
-       #rospy.loginfo(f"({after_ts - before_ts}ms): Angles Left: {angles_msg.left_arm} Right: {angles_msg.right_arm}")
-        rospy.loginfo(f"ROBOT_COORD_SYS LT: ({lt.x}, {lt.y}, {lt.z}) RT: ({rt.x}, {rt.y}, {rt.z})")
-        rospy.loginfo(f"CAMERA_COORD_SYS LT: ({lt.y}, {lt.z}, {lt.x}) RT: ({rt.y}, {rt.z}, {rt.x})")
-    else:
+    if right_response.error_code.val != SUCCESS_CODE or left_response.error_code.val != SUCCESS_CODE:
         rospy.logerr(f"{left_response.error_code.val}, ({lt.x}, {lt.y}, {lt.z}) | {right_response.error_code.val}, ({rt.x}, {rt.y}, {rt.z})")
+        return
+
+    right_arm = [x for x in right_response.solution.joint_state.position[-4:]]
+    left_arm = [x for x in left_response.solution.joint_state.position[-8:-4]]
+
+    if not angles_valid(left_arm + right_arm):
+        rospy.logerr("Invalid angles after successful IK response")
+        return
+        
+    angles_msg = Angles()
+    angles_msg.right_arm = right_arm + [0, 0]
+    angles_msg.left_arm = left_arm + [0, 0]
+    pub.publish(angles_msg)
+    rospy.loginfo(f"ROBOT_COORD_SYS LT: ({lt.x}, {lt.y}, {lt.z}) RT: ({rt.x}, {rt.y}, {rt.z})")
+    rospy.loginfo(f"CAMERA_COORD_SYS LT: ({lt.y}, {lt.z}, {lt.x}) RT: ({rt.y}, {rt.z}, {rt.x})")
 
 
 def app():

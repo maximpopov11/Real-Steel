@@ -1,13 +1,51 @@
 <robot name="g1_29dof_rev_1_0">
-    <mujoco>
-        <compiler meshdir="package://g1_moveit_config/meshes" discardvisual="false" />
-    </mujoco>
-    <!-- [CAUTION] uncomment when convert to mujoco -->
-    <!-- <link name="world"></link>
-  <joint name="floating_base_joint" type="floating">
-    <parent link="world"/>
-    <child link="pelvis"/>
-  </joint> -->
+    <link name="safe_zone_above_link">
+        <visual>
+            <origin xyz="0 0 .5" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius=".09" length=".4"/>
+            </geometry>
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 .5" rpy="0 0 0" />
+            <geometry>
+                <cylinder radius=".09" length=".4"/>
+            </geometry>
+        </collision>
+    </link>
+    <joint name="safe_zone_above_joint" type="fixed">
+        <parent link="head_link" />
+        <child link="safe_zone_above_link" />
+    </joint>
+    <link name="safe_zone_behind_link">
+        <visual>
+            <origin xyz="-.4 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="-.4 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+        </collision>
+        <inertial>
+            <mass value="0.1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </link>
+    <joint name="safe_zone_behind_joint" type="fixed">
+        <parent link="pelvis" />
+        <child link="safe_zone_behind_link" />
+    </joint>
     <link name="pelvis">
         <inertial>
             <origin xyz="0 0 -0.07605" rpy="0 0 0" />
@@ -451,6 +489,12 @@
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
+	<collision>
+            <origin xyz="0 0 -.2" rpy="0 0 0" />
+	    <geometry>
+		<box size=".3 .4 .3"/>	
+	    </geometry>
+	</collision>
     </link>
     <joint name="waist_yaw_joint" type="revolute">
         <origin xyz="0 0 0" rpy="0 0 0" />
@@ -566,26 +610,6 @@
         <origin xyz="0.0039635 0 -0.044" rpy="0 0 0" />
         <parent link="torso_link" />
         <child link="head_link" />
-    </joint>
-    <!-- IMU -->
-    <link name="imu_in_torso" />
-    <joint name="imu_in_torso_joint" type="fixed">
-        <origin xyz="-0.03959 -0.00224 0.14792" rpy="0 0 0" />
-        <parent link="torso_link" />
-        <child link="imu_in_torso" />
-    </joint>
-    <link name="imu_in_pelvis" />
-    <joint name="imu_in_pelvis_joint" type="fixed">
-        <origin xyz="0.04525 0 -0.08339" rpy="0 0 0" />
-        <parent link="pelvis" />
-        <child link="imu_in_pelvis" />
-    </joint>
-    <!-- d435 -->
-    <link name="d435_link" />
-    <joint name="d435_joint" type="fixed">
-        <origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0" />
-        <parent link="torso_link" />
-        <child link="d435_link" />
     </joint>
     <!-- mid360 -->
     <link name="mid360_link" />
@@ -711,7 +735,7 @@
         <axis xyz="0 1 0" />
         <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37" />
     </joint>
-    <joint name="left_wrist_roll_joint" type="revolute">
+    <joint name="left_wrist_roll_joint" type="fixed">
         <origin xyz="0.100 0.00188791 -0.010" rpy="0 0 0" />
         <axis xyz="1 0 0" />
         <parent link="left_elbow_link" />
@@ -740,7 +764,7 @@
             </geometry>
         </collision>
     </link>
-    <joint name="left_wrist_pitch_joint" type="revolute">
+    <joint name="left_wrist_pitch_joint" type="fixed">
         <origin xyz="0.038 0 0" rpy="0 0 0" />
         <axis xyz="0 1 0" />
         <parent link="left_wrist_roll_link" />
@@ -769,7 +793,7 @@
             </geometry>
         </collision>
     </link>
-    <joint name="left_wrist_yaw_joint" type="revolute">
+    <joint name="left_wrist_yaw_joint" type="fixed">
         <origin xyz="0.046 0 0" rpy="0 0 0" />
         <axis xyz="0 0 1" />
         <parent link="left_wrist_pitch_link" />
@@ -810,18 +834,18 @@
             <inertia ixx="0.00010099485234748" ixy="0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
         <collision>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
         </collision>
     </link>
@@ -941,7 +965,7 @@
         <axis xyz="0 1 0" />
         <limit lower="-1.0472" upper="2.0944" effort="25" velocity="37" />
     </joint>
-    <joint name="right_wrist_roll_joint" type="revolute">
+    <joint name="right_wrist_roll_joint" type="fixed">
         <origin xyz="0.100 -0.00188791 -0.010" rpy="0 0 0" />
         <axis xyz="1 0 0" />
         <parent link="right_elbow_link" />
@@ -970,7 +994,7 @@
             </geometry>
         </collision>
     </link>
-    <joint name="right_wrist_pitch_joint" type="revolute">
+    <joint name="right_wrist_pitch_joint" type="fixed">
         <origin xyz="0.038 0 0" rpy="0 0 0" />
         <axis xyz="0 1 0" />
         <parent link="right_wrist_roll_link" />
@@ -999,7 +1023,7 @@
             </geometry>
         </collision>
     </link>
-    <joint name="right_wrist_yaw_joint" type="revolute">
+    <joint name="right_wrist_yaw_joint" type="fixed">
         <origin xyz="0.046 0 0" rpy="0 0 0" />
         <axis xyz="0 0 1" />
         <parent link="right_wrist_pitch_link" />
@@ -1040,315 +1064,20 @@
             <inertia ixx="0.00010099485234748" ixy="-0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="-0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
         <collision>
-            <origin xyz="0.07 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <sphere radius="0.07" />
+                <sphere radius="0.09" />
             </geometry>
         </collision>
     </link>
-    <transmission name="trans_left_hip_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_hip_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_hip_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_hip_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_hip_roll_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_hip_roll_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_hip_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_hip_yaw_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_hip_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_knee_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_knee_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_knee_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_ankle_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_ankle_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_ankle_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_ankle_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_ankle_roll_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_ankle_roll_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_hip_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_hip_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_hip_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_hip_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_hip_roll_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_hip_roll_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_hip_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_hip_yaw_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_hip_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_knee_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_knee_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_knee_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_ankle_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_ankle_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_ankle_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_ankle_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_ankle_roll_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_ankle_roll_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_waist_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="waist_yaw_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="waist_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_waist_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="waist_roll_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="waist_roll_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_waist_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="waist_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="waist_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_shoulder_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_shoulder_pitch_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_shoulder_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_shoulder_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_shoulder_roll_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_shoulder_roll_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_shoulder_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_shoulder_yaw_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_shoulder_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_elbow_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_elbow_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_elbow_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_wrist_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_wrist_roll_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_wrist_roll_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_wrist_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_wrist_pitch_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_wrist_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_left_wrist_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="left_wrist_yaw_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="left_wrist_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_shoulder_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_shoulder_pitch_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_shoulder_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_shoulder_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_shoulder_roll_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_shoulder_roll_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_shoulder_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_shoulder_yaw_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_shoulder_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_elbow_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_elbow_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_elbow_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_wrist_roll_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_wrist_roll_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_wrist_roll_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_wrist_pitch_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_wrist_pitch_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_wrist_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <transmission name="trans_right_wrist_yaw_joint">
-        <type>transmission_interface/SimpleTransmission</type>
-        <joint name="right_wrist_yaw_joint">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-        </joint>
-        <actuator name="right_wrist_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
-            <mechanicalReduction>1</mechanicalReduction>
-        </actuator>
-    </transmission>
-    <gazebo>
-        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-            <robotNamespace>/</robotNamespace>
-        </plugin>
-    </gazebo>
 </robot>
 

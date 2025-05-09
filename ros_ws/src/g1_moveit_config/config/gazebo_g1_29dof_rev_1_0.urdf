@@ -1,63 +1,82 @@
-<robot name="g1_dual_arm">
-    <mujoco>
-        <compiler meshdir="package://franka_description/meshes" discardvisual="false" />
-    </mujoco>
-    <!-- [CAUTION] uncomment when convert to mujoco -->
-    <!-- <link name="world"></link>
-  <joint name="floating_base_joint" type="floating">
-    <parent link="world"/>
-    <child link="waist_yaw_link"/>
-  </joint> -->
-    <!-- Torso -->
-    <link name="waist_yaw_link">
-        <inertial>
-            <origin xyz="0.003964 0 0.018769" rpy="0 0 0" />
-            <mass value="0.244" />
-            <inertia ixx="9.9587E-05" ixy="-1.833E-06" ixz="-1.2617E-05" iyy="0.00012411" iyz="-1.18E-07" izz="0.00015586" />
-        </inertial>
+<robot name="g1_29dof_rev_1_0">
+    <link name="safe_zone_above_link">
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0 0 .3" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/waist_yaw_link.STL" />
+                <cylinder radius=".12" length=".9" />
             </geometry>
-            <material name="white">
-                <color rgba="0.7 0.7 0.7 1" />
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
             </material>
         </visual>
-    </link>
-    <link name="waist_roll_link">
-        <inertial>
-            <origin xyz="0 -0.000236 0.010111" rpy="0 0 0" />
-            <mass value="0.047" />
-            <inertia ixx="7.515E-06" ixy="0" ixz="0" iyy="6.398E-06" iyz="9.9E-08" izz="3.988E-06" />
-        </inertial>
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+        <collision>
+            <origin xyz="0 0 .3" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/waist_roll_link.STL" />
+                <cylinder radius=".12" length=".9" />
             </geometry>
-            <material name="white">
-                <color rgba="0.7 0.7 0.7 1" />
-            </material>
-        </visual>
+        </collision>
+        <inertial>
+            <mass value="0.1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
     </link>
-    <joint name="waist_roll_joint" type="fixed">
-        <origin xyz="-0.0039635 0 0.035" rpy="0 0 0" />
-        <parent link="waist_yaw_link" />
-        <child link="waist_roll_link" />
-        <axis xyz="1 0 0" />
-        <limit lower="-0.52" upper="0.52" effort="50" velocity="37" />
+    <joint name="safe_zone_above_joint" type="fixed">
+        <parent link="head_link" />
+        <child link="safe_zone_above_link" />
     </joint>
-    <link name="torso_link">
+    <link name="safe_zone_behind_link">
+        <visual>
+            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="-.25 0 0" rpy="0 0 0" />
+            <geometry>
+                <box size=".01 2 2" />
+            </geometry>
+        </collision>
         <inertial>
-            <origin xyz="0.002601 0.000257 0.153719" rpy="0 0 0" />
-            <mass value="8.562" />
-            <inertia ixx="0.065674966" ixy="-8.597E-05" ixz="-0.001737252" iyy="0.053535188" iyz="8.6899E-05" izz="0.030808125" />
+            <mass value="0.1" />
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <inertia ixx="0.03" iyy="0.03" izz="0.03" ixy="0.0" ixz="0.0" iyz="0.0" />
+        </inertial>
+    </link>
+    <joint name="safe_zone_behind_joint" type="fixed">
+        <parent link="pelvis" />
+        <child link="safe_zone_behind_link" />
+    </joint>
+    <link name="pelvis">
+        <inertial>
+            <origin xyz="0 0 -0.07605" rpy="0 0 0" />
+            <mass value="3.813" />
+            <inertia ixx="0.010549" ixy="0" ixz="2.1E-06" iyy="0.0093089" iyz="0" izz="0.0079184" />
         </inertial>
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/torso_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/pelvis.STL" />
+            </geometry>
+            <material name="dark">
+                <color rgba="0.2 0.2 0.2 1" />
+            </material>
+        </visual>
+    </link>
+    <link name="pelvis_contour_link">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="0.001" />
+            <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://g1_moveit_config/meshes/pelvis_contour_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -66,12 +85,91 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/torso_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/pelvis_contour_link.STL" />
             </geometry>
         </collision>
     </link>
-    <joint name="waist_pitch_joint" type="fixed">
-        <origin xyz="0 0 0.019" rpy="0 0 0" />
+    <joint name="pelvis_contour_joint" type="fixed">
+        <parent link="pelvis" />
+        <child link="pelvis_contour_link" />
+    </joint>
+    <!-- Torso -->
+    <link name="waist_yaw_link">
+        <inertial>
+            <origin xyz="0.003494 0.000233 0.018034" rpy="0 0 0" />
+            <mass value="0.214" />
+            <inertia ixx="0.00010673" ixy="2.703E-06" ixz="-7.631E-06" iyy="0.00010422" iyz="-2.01E-07" izz="0.0001625" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://g1_moveit_config/meshes/waist_yaw_link_rev_1_0.STL" />
+            </geometry>
+            <material name="white">
+                <color rgba="0.7 0.7 0.7 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 -.2" rpy="0 0 0" />
+            <geometry>
+                <box size=".3 .4 .3" />
+            </geometry>
+        </collision>
+    </link>
+    <joint name="waist_yaw_joint" type="revolute">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <parent link="pelvis" />
+        <child link="waist_yaw_link" />
+        <axis xyz="0 0 1" />
+        <limit lower="-2.618" upper="2.618" effort="88" velocity="32" />
+    </joint>
+    <link name="waist_roll_link">
+        <inertial>
+            <origin xyz="0 2.3E-05 0" rpy="0 0 0" />
+            <mass value="0.086" />
+            <inertia ixx="7.079E-06" ixy="0" ixz="0" iyy="6.339E-06" iyz="0" izz="8.245E-06" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://g1_moveit_config/meshes/waist_roll_link_rev_1_0.STL" />
+            </geometry>
+            <material name="white">
+                <color rgba="0.7 0.7 0.7 1" />
+            </material>
+        </visual>
+    </link>
+    <joint name="waist_roll_joint" type="revolute">
+        <origin xyz="-0.0039635 0 0.044" rpy="0 0 0" />
+        <parent link="waist_yaw_link" />
+        <child link="waist_roll_link" />
+        <axis xyz="1 0 0" />
+        <limit lower="-0.52" upper="0.52" effort="50" velocity="37" />
+    </joint>
+    <link name="torso_link">
+        <inertial>
+            <origin xyz="0.000931 0.000346 0.15082" rpy="0 0 0" />
+            <mass value="6.78" />
+            <inertia ixx="0.05905" ixy="3.3302E-05" ixz="-0.0017715" iyy="0.047014" iyz="-2.2399E-05" izz="0.025652" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://g1_moveit_config/meshes/torso_link_rev_1_0.STL" />
+            </geometry>
+            <material name="white">
+                <color rgba="0.7 0.7 0.7 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="package://g1_moveit_config/meshes/torso_link_rev_1_0.STL" />
+            </geometry>
+        </collision>
+    </link>
+    <joint name="waist_pitch_joint" type="revolute">
+        <origin xyz="0 0 0" rpy="0 0 0" />
         <parent link="waist_roll_link" />
         <child link="torso_link" />
         <axis xyz="0 1 0" />
@@ -79,7 +177,7 @@
     </joint>
     <!-- LOGO -->
     <joint name="logo_joint" type="fixed">
-        <origin xyz="0.0039635 0 -0.054" rpy="0 0 0" />
+        <origin xyz="0.0039635 0 -0.044" rpy="0 0 0" />
         <parent link="torso_link" />
         <child link="logo_link" />
     </joint>
@@ -92,7 +190,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/logo_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/logo_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -101,7 +199,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/logo_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/logo_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -115,7 +213,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/head_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/head_link.STL" />
             </geometry>
             <material name="dark">
                 <color rgba="0.2 0.2 0.2 1" />
@@ -124,54 +222,39 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/head_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/head_link.STL" />
             </geometry>
         </collision>
     </link>
     <joint name="head_joint" type="fixed">
-        <origin xyz="0.0039635 0 -0.054" rpy="0 0 0" />
+        <origin xyz="0.0039635 0 -0.044" rpy="0 0 0" />
         <parent link="torso_link" />
         <child link="head_link" />
     </joint>
-    <!-- Waist Support -->
-    <link name="waist_support_link">
-        <inertial>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <mass value="0.001" />
-            <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7" />
-        </inertial>
-        <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="package://franka_description/meshes/waist_support_link.STL" />
-            </geometry>
-            <material name="white">
-                <color rgba="0.7 0.7 0.7 1" />
-            </material>
-        </visual>
-        <collision>
-            <origin xyz="0 0 0" rpy="0 0 0" />
-            <geometry>
-                <mesh filename="package://franka_description/meshes/waist_support_link.STL" />
-            </geometry>
-        </collision>
-    </link>
-    <joint name="waist_support_joint" type="fixed">
-        <origin xyz="0.0039635 0 -0.054" rpy="0 0 0" />
+    <!-- IMU -->
+    <link name="imu_in_torso" />
+    <joint name="imu_in_torso_joint" type="fixed">
+        <origin xyz="-0.03959 -0.00224 0.14792" rpy="0 0 0" />
         <parent link="torso_link" />
-        <child link="waist_support_link" />
+        <child link="imu_in_torso" />
+    </joint>
+    <link name="imu_in_pelvis" />
+    <joint name="imu_in_pelvis_joint" type="fixed">
+        <origin xyz="0.04525 0 -0.08339" rpy="0 0 0" />
+        <parent link="pelvis" />
+        <child link="imu_in_pelvis" />
     </joint>
     <!-- d435 -->
     <link name="d435_link" />
     <joint name="d435_joint" type="fixed">
-        <origin xyz="0.0576235 0.01753 0.41987" rpy="0 0.8307767239493009 0" />
+        <origin xyz="0.0576235 0.01753 0.42987" rpy="0 0.8307767239493009 0" />
         <parent link="torso_link" />
         <child link="d435_link" />
     </joint>
     <!-- mid360 -->
     <link name="mid360_link" />
     <joint name="mid360_joint" type="fixed">
-        <origin xyz="0.0002835 0.00003 0.40618" rpy="0 0.04014257279586953 0" />
+        <origin xyz="0.0002835 0.00003 0.41618" rpy="0 0.04014257279586953 0" />
         <parent link="torso_link" />
         <child link="mid360_link" />
     </joint>
@@ -185,7 +268,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_shoulder_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -199,7 +282,7 @@
         </collision>
     </link>
     <joint name="left_shoulder_pitch_joint" type="revolute">
-        <origin xyz="0.0039563 0.10022 0.23778" rpy="0.27931 5.4949E-05 -0.00019159" />
+        <origin xyz="0.0039563 0.10022 0.24778" rpy="0.27931 5.4949E-05 -0.00019159" />
         <parent link="torso_link" />
         <child link="left_shoulder_pitch_link" />
         <axis xyz="0 1 0" />
@@ -214,7 +297,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_shoulder_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -243,7 +326,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -252,7 +335,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_shoulder_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -272,7 +355,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_elbow_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -281,7 +364,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_elbow_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -308,7 +391,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -317,7 +400,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -337,7 +420,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -346,7 +429,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -366,7 +449,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -375,7 +458,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/left_wrist_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -391,14 +474,20 @@
             <inertia ixx="0.00010099485234748" ixy="0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/left_rubber_hand.STL" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
+        <collision>
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.09" />
+            </geometry>
+        </collision>
     </link>
     <link name="right_shoulder_pitch_link">
         <inertial>
@@ -409,7 +498,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_shoulder_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -423,7 +512,7 @@
         </collision>
     </link>
     <joint name="right_shoulder_pitch_joint" type="revolute">
-        <origin xyz="0.0039563 -0.10021 0.23778" rpy="-0.27931 5.4949E-05 0.00019159" />
+        <origin xyz="0.0039563 -0.10021 0.24778" rpy="-0.27931 5.4949E-05 0.00019159" />
         <parent link="torso_link" />
         <child link="right_shoulder_pitch_link" />
         <axis xyz="0 1 0" />
@@ -438,7 +527,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_shoulder_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -467,7 +556,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -476,7 +565,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_shoulder_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_shoulder_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -496,7 +585,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_elbow_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -505,7 +594,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_elbow_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_elbow_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -532,7 +621,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_roll_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -541,7 +630,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_roll_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_roll_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -561,7 +650,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_pitch_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -570,7 +659,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_pitch_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_pitch_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -590,7 +679,7 @@
         <visual>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_yaw_link.STL" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
@@ -599,7 +688,7 @@
         <collision>
             <origin xyz="0 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_wrist_yaw_link.STL" />
+                <mesh filename="package://g1_moveit_config/meshes/right_wrist_yaw_link.STL" />
             </geometry>
         </collision>
     </link>
@@ -615,15 +704,51 @@
             <inertia ixx="0.00010099485234748" ixy="-0.00003618590790516" ixz="-0.00000074301518642" iyy="0.00028135871571621" iyz="-0.00000330189743286" izz="0.00021894770413514" />
         </inertial>
         <visual>
-            <origin xyz="0 0 0" rpy="0 0 0" />
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
             <geometry>
-                <mesh filename="package://franka_description/meshes/right_rubber_hand.STL" />
+                <sphere radius="0.09" />
             </geometry>
             <material name="white">
                 <color rgba="0.7 0.7 0.7 1" />
             </material>
         </visual>
+        <collision>
+            <origin xyz="0.09 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.09" />
+            </geometry>
+        </collision>
     </link>
+    <transmission name="trans_waist_yaw_joint">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="waist_yaw_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="waist_yaw_joint_motor">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+    <transmission name="trans_waist_roll_joint">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="waist_roll_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="waist_roll_joint_motor">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
+    <transmission name="trans_waist_pitch_joint">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="waist_pitch_joint">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="waist_pitch_joint_motor">
+            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+    </transmission>
     <transmission name="trans_left_shoulder_pitch_joint">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="left_shoulder_pitch_joint">
@@ -677,20 +802,20 @@
     <transmission name="trans_left_wrist_pitch_joint">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="left_wrist_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </joint>
         <actuator name="left_wrist_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
     <transmission name="trans_left_wrist_yaw_joint">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="left_wrist_yaw_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </joint>
         <actuator name="left_wrist_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
@@ -747,20 +872,20 @@
     <transmission name="trans_right_wrist_pitch_joint">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="right_wrist_pitch_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </joint>
         <actuator name="right_wrist_pitch_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
     <transmission name="trans_right_wrist_yaw_joint">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="right_wrist_yaw_joint">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
         </joint>
         <actuator name="right_wrist_yaw_joint_motor">
-            <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+            <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
             <mechanicalReduction>1</mechanicalReduction>
         </actuator>
     </transmission>
