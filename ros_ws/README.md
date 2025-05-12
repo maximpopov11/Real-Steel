@@ -3,7 +3,7 @@
 
 1. **Clone the repository**  
 ```bash
-git clone [REPOSITORY_URL] sd15_reel-steel
+git clone https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel.git sd15_reel-steel
 cd sd15_reel-steel
 ```
 2. **Set up a Python virtual environment**
