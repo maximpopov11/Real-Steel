@@ -1,6 +1,6 @@
 <launch>
   <include file="$(find preprocessing)/launch/preprocessing.launch"/>
   <include file="$(find kinematics)/launch/kinematics.launch"/>
-  <include file="$(find g1_moveit_config)/launch/demo.launch" output="log"/>
-  <include file="$(find graph_points)/launch/graph_points.launch"/>
+  <include file="$(find g1_moveit_config)/launch/demo.launch" output="screen"/>
+  <include file="$(find graph_points)/launch/graph_points.launch" />
 </launch>

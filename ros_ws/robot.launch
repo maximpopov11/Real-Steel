@@ -1,6 +1,0 @@
-<launch>
-    <node name="landmarks" pkg="landmarks" type="main.py" output="screen" />
-    <node name="preprocessing" pkg="preprocessing" type="main.py" output="screen" />
-    <node name="kinematics" pkg="kinematics" type="main.py" output="screen" />
-    <node name="simulation" pkg="simulation" type="main.py" output="screen" />
-</launch>

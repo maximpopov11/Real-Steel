@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reel-Steel Robotics Project</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #333;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #2c3e50;
+      }
+      code,
+      pre {
+        background-color: #f5f5f5;
+        padding: 2px 5px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      pre {
+        padding: 10px;
+        overflow-x: auto;
+      }
+      .section {
+        margin-bottom: 30px;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 20px;
+      }
+      .note {
+        background-color: #e7f3fe;
+        border-left: 6px solid #2196f3;
+        padding: 10px;
+        margin: 15px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Reel-Steel Robotics Project</h1>
+     
+    </header>
+
+    <div class="section">
+      <h2>Team</h2>
+      <p>
+        This project is developed by Team Reel-Steel (SD15) as part of Computer
+        Science 4020 Senior Design course.
+      </p>
+      <p>
+        Team Members: Dylan Booth, Zach Campbell, Isaac Lo, Max Mayer-Mader,
+        Maxim Popov
+      </p>
+    </div>
+
+    <div class="section">
+      <h2>Project Overview</h2>
+      <p>
+This ROS-based system enables real-time human-to-robot motion mirroring using depth camera pose estimation (via MediaPipe) and inverse kinematics. It processes body landmarks to calculate joint angles for a simulated or physical robot arm, integrating nodes for preprocessing, kinematics, visualization (3D graphs), and Mujoco-based simulation. The pipeline supports both debugging (with live visualization) and production modes (via trajectory logging to CSV). Key challenges include smoothing noisy input data, enforcing natural joint constraints, and aligning coordinate systems between human and robot kinematics. The goal is to achieve fluid, human-like robotic motion through optimized MoveIt configurations, motion blending, and sensor-data filtering.
+      </p>
+
+ 
+    </div>
+
+    <div class="section">
+      <h2>Repository Structure</h2>
+      <p>The repository is organized into several key directories:</p>
+      <ul>
+        <li>
+          <strong>Demo1/</strong> - MediaPipe pose detection implementations for
+          images and videos
+        </li>
+        <li>
+          <strong>ik/</strong> - Inverse Kinematics implementation using ROS
+        </li>
+        <li>
+          <strong>models/unitree_g1/</strong> - MJCF description of the Unitree
+          G1 robot
+        </li>
+        <li>
+          <strong>ros_ws/</strong> - ROS workspace containing multiple packages:
+          <ul>
+            <li><strong>custom_msg/</strong> - Custom message definitions for joint names</li>
+            <li>
+              <strong>graph_points/</strong> - Tools for visualizing and
+              processing points
+            </li>
+            <li>
+              <strong>kinematics/</strong> - Kinematics calculations and robot
+              control
+            </li>
+            <li><strong>landmarks/</strong> - Processing of pose landmarks</li>
+            <li><strong>preprocessing/</strong> - Data preprocessing tools</li>
+            <li><strong>simulator/</strong> - Robot simulation environment</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Documents/</strong> - Project documentation, presentations,
+          and research notes
+        </li>
+        <li><strong>images/</strong> - Image resources used by the project</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>Installation</h2>
+      <h3>Prerequisites</h3>
+      <ul>
+        <li>Ubuntu 20.04</li>
+        <li>ROS (Robot Operating System)</li>
+        <li>Python 3.8+</li>
+        <li>MuJoCo 2.3.4 or later (for robot simulation)</li>
+        <li>MediaPipe</li>
+        <li>OpenCV</li>
+        <li>Matplotlib</li>
+        <li>RealSense Camera (depth camera)</li>
+      </ul>
+
+      <h3>Setup Instructions</h3>
+      <ol>
+        <li>
+          Clone the repository or unpack the zip file:
+          <pre><code>git clone https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel.gitsd15_reel-steel
+cd sd15_reel-steel</code></pre>
+        </li>
+        <li>
+          Set up a Python virtual environment:
+          <pre><code>python -m venv .venv
+source .venv/bin/activate  # On Linux/Mac</code></pre>
+        </li>
+        <li>
+          Install Python dependencies:
+          <pre><code>pip install -r requirements.txt</code></pre>
+        </li>
+        <li>
+          Build the ROS workspace:
+          <pre><code>cd ros_ws
+catkin_make
+source devel/setup.bash  # On Linux/Mac
+</code></pre>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>Usage</h2>
+
+        <a href = "https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel/-/tree/main/ros_ws?ref_type=heads" ><h3>How to run</h3> </a>
+    </div>
+
+    <div class="section">
+      <h2>Documentation</h2>
+      <p>Detailed documentation can be found in the following locations:</p>
+      <ul>
+        <li><a href="https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel/-/tree/main/Documents?ref_type=heads">Documentation</a> </li>
+        <li><a href="https://docs.google.com/document/d/1CZ_a0L8OYOXmp1QZ9-A8OC7W3wHBLY9dLWvkfvaAQpM/edit?tab=t.0#heading=h.8brlp01066dz">Final Report</a> </li>
+        <li><a href="#">Website</a> </li>
+      </ul>
+
+      <h3>Important Research References</h3>
+      <p>
+        The Documents/Research.txt file contains valuable research links,
+        including:
+      </p>
+      <ul>
+        <li>
+          <a href="https://github.com/unitreerobotics/unitree_ros"
+            >Unitree ROS</a
+          >
+          - Official ROS packages for Unitree robots
+        </li>
+        <li>
+          <a
+            href="https://github.com/unitreerobotics/unitree_ros/tree/master/robots/g1_description"
+            >G1 Robot Description</a
+          >
+          - URDF and XACRO files for the G1
+        </li>
+        <li>
+          <a href="https://moveit.github.io/moveit_tutorials/"
+            >MoveIt Tutorials</a
+          >
+          - Resources for working with the MoveIt motion planning framework
+        </li>
+        <li>
+          <a
+            href="https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker"
+            >MediaPipe Pose Landmarker</a
+          >
+          - Documentation for the pose detection system
+        </li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <h2>MediaPipe Information</h2>
+      <p>
+        This project uses MediaPipe for pose detection. Key resources include:
+      </p>
+      <ul>
+        <li>
+          <a
+            href="https://ai.google.dev/edge/mediapipe/solutions/vision/pose_landmarker"
+            >MediaPipe Pose Landmarker Documentation</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://bleedaiacademy.com/introduction-to-pose-detection-and-basic-pose-classification/"
+            >Introduction to Pose Detection and Classification</a
+          >
+        </li>
+      </ul>
+      <p>When working with MediaPipe:</p>
+      <ul>
+        <li>Use virtual environments to manage dependencies</li>
+        <li>
+          The <code>detect_async</code> method can track poses across video
+          frames
+        </li>
+        <li>See the Demo1 directory for implementation examples</li>
+      </ul>
+    </div>
+
+    <footer></footer>
+  </body>
+</html>
