@@ -76,16 +76,10 @@
     <div class="section">
       <h2>Project Overview</h2>
       <p>
-        This project implements a control system for the Unitree G1 humanoid
-        robot using computer vision, pose detection, and inverse kinematics. The
-        system detects human poses through video and translates them into robot
-        movements.
+This ROS-based system enables real-time human-to-robot motion mirroring using depth camera pose estimation (via MediaPipe) and inverse kinematics. It processes body landmarks to calculate joint angles for a simulated or physical robot arm, integrating nodes for preprocessing, kinematics, visualization (3D graphs), and Mujoco-based simulation. The pipeline supports both debugging (with live visualization) and production modes (via trajectory logging to CSV). Key challenges include smoothing noisy input data, enforcing natural joint constraints, and aligning coordinate systems between human and robot kinematics. The goal is to achieve fluid, human-like robotic motion through optimized MoveIt configurations, motion blending, and sensor-data filtering.
       </p>
 
-      <div class="note">
-        <strong>Note:</strong> This project is built using ROS (Robot Operating
-        System) and requires specific dependencies to run properly.
-      </div>
+ 
     </div>
 
     <div class="section">
