@@ -1,6 +1,6 @@
 from time import time
 
-SPEED_THRESHOLD = 2.0  # rad/s
+SPEED_THRESHOLD = 1.0  # rad/s
 
 def timestamp() -> int:
     """Returns the current time in milliseconds since the epoch using time()."""

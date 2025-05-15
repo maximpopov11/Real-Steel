@@ -1,3 +1,5 @@
 <launch>
-  <node pkg="graph_points" type="main.py" name="graph_points_node" output="screen"/>
+  <node pkg="graph_points" type="raw.py" name="graph_points_raw" output="screen"/>
+  <node pkg="graph_points" type="scaled.py" name="graph_points_node" output="screen"/>
+  <node pkg="graph_points" type="preprocessed.py" name="graph_points_pre" output="screen"/>
 </launch>
