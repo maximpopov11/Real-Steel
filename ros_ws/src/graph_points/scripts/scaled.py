@@ -85,7 +85,7 @@ def app():
     all_green_colors = ['green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green', 'green']
     while not rospy.is_shutdown():
         ax.set_xlim([-1, 1])
-        ax.set_ylim([0, 1.5])
+        ax.set_ylim([0, 1])
         ax.set_zlim([2, -2])
         ax.set_xlabel("X (Left/Right)")
         ax.set_ylabel("Y (Up/Down)")

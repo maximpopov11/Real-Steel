@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="preprocessing" type="main.py" name="preprocessing_node" output="screen"/>
-</launch>

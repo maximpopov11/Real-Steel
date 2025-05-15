@@ -91,7 +91,7 @@ def callback(result: PoseLandmarkerResult, output_image : mp.Image, timestamp_ms
     msg.timestamp       = timestamp_ms
 
     if PUBLISH_RAW_POINTS:
-        rospy.loginfo(msg) # will continue to log in CLI msg being sent
+        #rospy.loginfo(msg) # will continue to log in CLI msg being sent
         landmarks_pub.publish(msg)
 
     if PUBLISH_PREPROCESSED_POINTS:

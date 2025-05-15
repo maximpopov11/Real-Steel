@@ -254,7 +254,7 @@ def process_bodypoints(msg):
     # We don't want to publish if we're calibrating still
     preprocessed_pub.publish(preprocessed_msg)
     published_ts = int(time() * 1000)
-    rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
+    #rospy.loginfo(f"/prep ({published_ts - begin_ts}ms) {preprocessed_msg.right_wrist}")
 
     scaled_msg = scale_to_robot(preprocessed_msg)
     scaled_pub.publish(scaled_msg)
@@ -679,8 +679,12 @@ def _rolling_average(cur_frame_idx: int, count_to_use: int) -> List[List[float]]
     Returns:
         A frame with the points averaged, leaving the original frame as is.
     """
+    print(f"cur_frame_idx: {cur_frame_idx}")
+    print(f"len: {len(frames)-1}, frame{frames[len(frames)-1]}")
+    if len(frames)-1 == cur_frame_idx:
+        print(f"they're equal woohoo")
     average_count = count_to_use+1
-    current_frame = frames[cur_frame_idx]
+    current_frame = frames[len(frames)-1]
 
 
     if cur_frame_idx < average_count:
@@ -912,5 +916,5 @@ def scale_to_robot(msg):
         round(msg.left_wrist[1]*left_vertical_scale, 3)
     ]
     # rospy.loginfo("Scale factor: %f, Hips distance: %f", horizontal_scale, hips_distance)
-    rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
+    #rospy.loginfo("Scaled wrist: %f, %f, %f", msg.right_wrist[0]*right_horizontal_scale, msg.right_wrist[1]*right_vertical_scale, msg.right_wrist[2]*z_scale_factor)
     return newMsg

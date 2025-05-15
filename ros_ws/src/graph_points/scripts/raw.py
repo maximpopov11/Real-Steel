@@ -61,7 +61,7 @@ def plotting_callback(msg):
 def app():
     sub = rospy.Subscriber('landmarks', Landmarks, plotting_callback)
     rospy.init_node('POSE_Display_Raw_Landmarks', anonymous=True)
-    all_orange_colors = ['orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange', 'orange']
+    all_red_colors = ['red', 'red', 'red', 'red', 'red', 'red', 'red', 'red']
     while not rospy.is_shutdown():
         ax.set_xlim([0, 640])
         ax.set_ylim([0, 480])
@@ -80,7 +80,7 @@ def app():
             continue
 
         ax.clear()
-        ax.scatter(list_of_x_coord, list_of_y_coord, list_of_z_coord, color=all_orange_colors)
+        ax.scatter(list_of_x_coord, list_of_y_coord, list_of_z_coord, color=all_red_colors)
 
     print("exited loop")
     
