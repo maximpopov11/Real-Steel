@@ -28,6 +28,8 @@ rosluanch reel_steel main.launch
 rosluanch reel_steel main.launch
 ```
 
+### Run
+
 ### Understanding Launch File Output
 
 When you run a launch file, you'll see:
@@ -54,3 +56,20 @@ You might run individual nodes when:
 
 ### How to Run Individual Nodes
 
+```
+rosrun [node name] [file name]
+```
+E.x.
+```
+rosrun kinematics main.py
+```
+
+Or
+
+```
+roslaunch [node name] [node name].launch
+```
+E.x
+```
+roslaunch kinematics kinematics.launch
+```
