@@ -15,17 +15,17 @@
 
 #### Run Main Version
 ```
-rosluanch reel_steel main.launch
+roslaunch reel_steel main.launch
 ```
 
 #### Run Debug Version
 ```
-rosluanch reel_steel main.launch
+roslaunch reel_steel debug.launch
 ```
 
-#### Run Main
+#### Replay
 ```
-rosluanch reel_steel main.launch
+roslaunch reel_steel replay.launch
 ```
 
 ### Run
@@ -56,20 +56,45 @@ You might run individual nodes when:
 
 ### How to Run Individual Nodes
 
+Individual nodes can be run using the `rosrun` command. In order to run the whole pipeline without the launch script, these nodes much all be run simultaneously:
+
+#### Landmarks
 ```
-rosrun [node name] [file name]
+rosrun landmarks main.py
 ```
-E.x.
+In order to debug the project's output, it is often useful to run the landmarks node with the `-combined` flag -- this will also publish the `/raw` and `/preprocessed` topics, intermediate steps in the node's preprocessing. The `/scaled` topic is always published to facilitate the next step in point production.
+
+#### graph_points (Debug)
+```
+# Launches raw pose point graphing node
+rosrun graph_points raw.py
+
+# Launches preprocessed (smoothed and translated) point graphing node
+rosrun graph_points preprocessed.py
+
+# Launches scaled (scaled to robot proportions) point graphing node
+rosrun graph_points scaled.py
+```
+Additionally, there is a launch file that launches all three nodes side-by-side:
+```
+roslaunch graph_points graph_points.launch
+```
+
+#### MoveIt Services
+```
+roslaunch g1_moveit_config demo.launch
+```
+#### Kinematics
 ```
 rosrun kinematics main.py
 ```
 
-Or
+#### Simulator (Debug)
+```
+rosrun simulator main.py
+```
 
+#### Robot_CSV
 ```
-roslaunch [node name] [node name].launch
-```
-E.x
-```
-roslaunch kinematics kinematics.launch
+rosrun kinematics robot_csv.py
 ```
