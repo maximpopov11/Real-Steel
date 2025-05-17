@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reel-Steel Robotics Project</title>
+    <title>Real Steel Robotics Project</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -164,8 +164,16 @@ source devel/setup.bash  # On Linux/Mac
 
     <div class="section">
       <h2>Usage</h2>
+        Launching the project is usually done by one of two launch scripts, either the main, production script that fires only strictly necessary nodes, or the debug launch script that also fires the graph points launch script. This allows you to visualize what the system is reading in while it is running.
+        <h3>Main</h3>
+        <pre><code>roslaunch reel_steel main.launch</code></pre>
+        <h3>Debug</h3>
+        <pre><code>roslaunch reel_steel debug.launch</code></pre>
+        <h3>Simulator</h3>
+        We have also configured MuJoCo to run in parallel with the system, though this is computationally expensive. This can be done using the command:
+        <pre><code>rosrun simulator main.py</code></pre>
 
-        <a href = "https://git.las.iastate.edu/SeniorDesignComS/2025s/402c/sd15_reel-steel/-/tree/main/ros_ws?ref_type=heads" ><h3>How to run</h3> </a>
+        See adjacent repository file Usage.md for more detailed instructions on running the project.
     </div>
 
     <div class="section">

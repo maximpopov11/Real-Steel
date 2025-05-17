@@ -47,4 +47,3 @@ For running graph visualization
 ```
 roslaunch reel_steel replay.launch
 ```
-For running with rosbags
